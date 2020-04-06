@@ -1,0 +1,480 @@
+base/vulkanexamplebase.o: base/vulkanexamplebase.cpp base/vulkanexamplebase.h \
+ external/glm/glm/glm.hpp external/glm/glm/detail/_fixes.hpp \
+ external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
+ external/glm/glm/detail/type_int.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/type_float.hpp \
+ external/glm/glm/detail/type_vec.hpp \
+ external/glm/glm/detail/precision.hpp \
+ external/glm/glm/detail/type_mat.hpp external/glm/glm/vec2.hpp \
+ external/glm/glm/detail/type_vec2.hpp \
+ external/glm/glm/detail/type_vec2.inl external/glm/glm/vec3.hpp \
+ external/glm/glm/detail/type_vec3.hpp \
+ external/glm/glm/detail/type_vec3.inl external/glm/glm/vec4.hpp \
+ external/glm/glm/detail/type_vec4.hpp \
+ external/glm/glm/detail/type_vec4.inl \
+ external/glm/glm/detail/type_vec4_simd.inl external/glm/glm/mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.inl \
+ external/glm/glm/detail/func_matrix.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../mat2x3.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.inl \
+ external/glm/glm/detail/../mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.inl \
+ external/glm/glm/detail/../mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.inl \
+ external/glm/glm/detail/../mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.inl \
+ external/glm/glm/detail/../mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.inl \
+ external/glm/glm/detail/../mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.inl \
+ external/glm/glm/detail/../mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.inl \
+ external/glm/glm/detail/../mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.inl \
+ external/glm/glm/detail/../detail/type_mat4x4_simd.inl \
+ external/glm/glm/detail/func_matrix.inl \
+ external/glm/glm/detail/../geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.inl \
+ external/glm/glm/detail/../detail/func_exponential.hpp \
+ external/glm/glm/detail/../detail/type_vec1.hpp \
+ external/glm/glm/detail/../detail/type_vec1.inl \
+ external/glm/glm/detail/../detail/func_exponential.inl \
+ external/glm/glm/detail/../detail/func_vector_relational.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/func_vector_relational.inl \
+ external/glm/glm/detail/../detail/func_vector_relational_simd.inl \
+ external/glm/glm/detail/../detail/_vectorize.hpp \
+ external/glm/glm/detail/../detail/func_exponential_simd.inl \
+ external/glm/glm/detail/../detail/../simd/exponential.h \
+ external/glm/glm/detail/../detail/func_common.hpp \
+ external/glm/glm/detail/../detail/_fixes.hpp \
+ external/glm/glm/detail/../detail/func_common.inl \
+ external/glm/glm/detail/../detail/func_common_simd.inl \
+ external/glm/glm/detail/../detail/../simd/common.h \
+ external/glm/glm/detail/../detail/func_geometric_simd.inl \
+ external/glm/glm/detail/../detail/../simd/geometric.h \
+ external/glm/glm/detail/func_matrix_simd.inl \
+ external/glm/glm/detail/../simd/matrix.h \
+ external/glm/glm/trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.inl \
+ external/glm/glm/detail/func_trigonometric_simd.inl \
+ external/glm/glm/exponential.hpp external/glm/glm/common.hpp \
+ external/glm/glm/packing.hpp external/glm/glm/detail/func_packing.hpp \
+ external/glm/glm/detail/func_packing.inl \
+ external/glm/glm/detail/type_half.hpp \
+ external/glm/glm/detail/type_half.inl \
+ external/glm/glm/detail/func_packing_simd.inl \
+ external/glm/glm/matrix.hpp external/glm/glm/vector_relational.hpp \
+ external/glm/glm/integer.hpp external/glm/glm/detail/func_integer.hpp \
+ external/glm/glm/detail/func_integer.inl \
+ external/glm/glm/detail/func_integer_simd.inl \
+ external/glm/glm/detail/../simd/integer.h external/vulkan/vulkan.h \
+ external/vulkan/vk_platform.h external/vulkan/vulkan_core.h \
+ base/keycodes.hpp base/VulkanTools.h base/VulkanInitializers.hpp \
+ base/VulkanDebug.h base/VulkanDevice.hpp base/VulkanBuffer.hpp \
+ base/VulkanSwapChain.hpp base/camera.hpp \
+ external/glm/glm/gtc/quaternion.hpp \
+ external/glm/glm/gtc/../gtc/constants.hpp \
+ external/glm/glm/gtc/../gtc/../detail/setup.hpp \
+ external/glm/glm/gtc/../gtc/constants.inl \
+ external/glm/glm/gtc/quaternion.inl \
+ external/glm/glm/gtc/quaternion_simd.inl \
+ external/glm/glm/gtc/matrix_transform.hpp \
+ external/glm/glm/gtc/matrix_transform.inl base/benchmark.hpp
+base/VulkanTools.o: base/VulkanTools.cpp base/VulkanTools.h \
+ external/vulkan/vulkan.h external/vulkan/vk_platform.h \
+ external/vulkan/vulkan_core.h base/VulkanInitializers.hpp
+base/VulkanDebug.o: base/VulkanDebug.cpp base/VulkanDebug.h \
+ external/vulkan/vulkan.h external/vulkan/vk_platform.h \
+ external/vulkan/vulkan_core.h external/glm/glm/glm.hpp \
+ external/glm/glm/detail/_fixes.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
+ external/glm/glm/detail/type_int.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/type_float.hpp \
+ external/glm/glm/detail/type_vec.hpp \
+ external/glm/glm/detail/precision.hpp \
+ external/glm/glm/detail/type_mat.hpp external/glm/glm/vec2.hpp \
+ external/glm/glm/detail/type_vec2.hpp \
+ external/glm/glm/detail/type_vec2.inl external/glm/glm/vec3.hpp \
+ external/glm/glm/detail/type_vec3.hpp \
+ external/glm/glm/detail/type_vec3.inl external/glm/glm/vec4.hpp \
+ external/glm/glm/detail/type_vec4.hpp \
+ external/glm/glm/detail/type_vec4.inl \
+ external/glm/glm/detail/type_vec4_simd.inl external/glm/glm/mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.inl \
+ external/glm/glm/detail/func_matrix.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../mat2x3.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.inl \
+ external/glm/glm/detail/../mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.inl \
+ external/glm/glm/detail/../mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.inl \
+ external/glm/glm/detail/../mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.inl \
+ external/glm/glm/detail/../mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.inl \
+ external/glm/glm/detail/../mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.inl \
+ external/glm/glm/detail/../mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.inl \
+ external/glm/glm/detail/../mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.inl \
+ external/glm/glm/detail/../detail/type_mat4x4_simd.inl \
+ external/glm/glm/detail/func_matrix.inl \
+ external/glm/glm/detail/../geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.inl \
+ external/glm/glm/detail/../detail/func_exponential.hpp \
+ external/glm/glm/detail/../detail/type_vec1.hpp \
+ external/glm/glm/detail/../detail/type_vec1.inl \
+ external/glm/glm/detail/../detail/func_exponential.inl \
+ external/glm/glm/detail/../detail/func_vector_relational.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/func_vector_relational.inl \
+ external/glm/glm/detail/../detail/func_vector_relational_simd.inl \
+ external/glm/glm/detail/../detail/_vectorize.hpp \
+ external/glm/glm/detail/../detail/func_exponential_simd.inl \
+ external/glm/glm/detail/../detail/../simd/exponential.h \
+ external/glm/glm/detail/../detail/func_common.hpp \
+ external/glm/glm/detail/../detail/_fixes.hpp \
+ external/glm/glm/detail/../detail/func_common.inl \
+ external/glm/glm/detail/../detail/func_common_simd.inl \
+ external/glm/glm/detail/../detail/../simd/common.h \
+ external/glm/glm/detail/../detail/func_geometric_simd.inl \
+ external/glm/glm/detail/../detail/../simd/geometric.h \
+ external/glm/glm/detail/func_matrix_simd.inl \
+ external/glm/glm/detail/../simd/matrix.h \
+ external/glm/glm/trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.inl \
+ external/glm/glm/detail/func_trigonometric_simd.inl \
+ external/glm/glm/exponential.hpp external/glm/glm/common.hpp \
+ external/glm/glm/packing.hpp external/glm/glm/detail/func_packing.hpp \
+ external/glm/glm/detail/func_packing.inl \
+ external/glm/glm/detail/type_half.hpp \
+ external/glm/glm/detail/type_half.inl \
+ external/glm/glm/detail/func_packing_simd.inl \
+ external/glm/glm/matrix.hpp external/glm/glm/vector_relational.hpp \
+ external/glm/glm/integer.hpp external/glm/glm/detail/func_integer.hpp \
+ external/glm/glm/detail/func_integer.inl \
+ external/glm/glm/detail/func_integer_simd.inl \
+ external/glm/glm/detail/../simd/integer.h
+
+Maze/drawer.o: Maze/drawer.cpp Maze/drawer.h Maze/VulkanExample.h \
+ external/glm/glm/glm.hpp external/glm/glm/detail/_fixes.hpp \
+ external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
+ external/glm/glm/detail/type_int.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/type_float.hpp \
+ external/glm/glm/detail/type_vec.hpp \
+ external/glm/glm/detail/precision.hpp \
+ external/glm/glm/detail/type_mat.hpp external/glm/glm/vec2.hpp \
+ external/glm/glm/detail/type_vec2.hpp \
+ external/glm/glm/detail/type_vec2.inl external/glm/glm/vec3.hpp \
+ external/glm/glm/detail/type_vec3.hpp \
+ external/glm/glm/detail/type_vec3.inl external/glm/glm/vec4.hpp \
+ external/glm/glm/detail/type_vec4.hpp \
+ external/glm/glm/detail/type_vec4.inl \
+ external/glm/glm/detail/type_vec4_simd.inl external/glm/glm/mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.inl \
+ external/glm/glm/detail/func_matrix.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../mat2x3.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.inl \
+ external/glm/glm/detail/../mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.inl \
+ external/glm/glm/detail/../mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.inl \
+ external/glm/glm/detail/../mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.inl \
+ external/glm/glm/detail/../mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.inl \
+ external/glm/glm/detail/../mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.inl \
+ external/glm/glm/detail/../mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.inl \
+ external/glm/glm/detail/../mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.inl \
+ external/glm/glm/detail/../detail/type_mat4x4_simd.inl \
+ external/glm/glm/detail/func_matrix.inl \
+ external/glm/glm/detail/../geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.inl \
+ external/glm/glm/detail/../detail/func_exponential.hpp \
+ external/glm/glm/detail/../detail/type_vec1.hpp \
+ external/glm/glm/detail/../detail/type_vec1.inl \
+ external/glm/glm/detail/../detail/func_exponential.inl \
+ external/glm/glm/detail/../detail/func_vector_relational.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/func_vector_relational.inl \
+ external/glm/glm/detail/../detail/func_vector_relational_simd.inl \
+ external/glm/glm/detail/../detail/_vectorize.hpp \
+ external/glm/glm/detail/../detail/func_exponential_simd.inl \
+ external/glm/glm/detail/../detail/../simd/exponential.h \
+ external/glm/glm/detail/../detail/func_common.hpp \
+ external/glm/glm/detail/../detail/_fixes.hpp \
+ external/glm/glm/detail/../detail/func_common.inl \
+ external/glm/glm/detail/../detail/func_common_simd.inl \
+ external/glm/glm/detail/../detail/../simd/common.h \
+ external/glm/glm/detail/../detail/func_geometric_simd.inl \
+ external/glm/glm/detail/../detail/../simd/geometric.h \
+ external/glm/glm/detail/func_matrix_simd.inl \
+ external/glm/glm/detail/../simd/matrix.h \
+ external/glm/glm/trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.inl \
+ external/glm/glm/detail/func_trigonometric_simd.inl \
+ external/glm/glm/exponential.hpp external/glm/glm/common.hpp \
+ external/glm/glm/packing.hpp external/glm/glm/detail/func_packing.hpp \
+ external/glm/glm/detail/func_packing.inl \
+ external/glm/glm/detail/type_half.hpp \
+ external/glm/glm/detail/type_half.inl \
+ external/glm/glm/detail/func_packing_simd.inl \
+ external/glm/glm/matrix.hpp external/glm/glm/vector_relational.hpp \
+ external/glm/glm/integer.hpp external/glm/glm/detail/func_integer.hpp \
+ external/glm/glm/detail/func_integer.inl \
+ external/glm/glm/detail/func_integer_simd.inl \
+ external/glm/glm/detail/../simd/integer.h \
+ external/glm/glm/gtc/matrix_transform.hpp \
+ external/glm/glm/gtc/../gtc/constants.hpp \
+ external/glm/glm/gtc/../gtc/../detail/setup.hpp \
+ external/glm/glm/gtc/../gtc/constants.inl \
+ external/glm/glm/gtc/matrix_transform.inl external/vulkan/vulkan.h \
+ external/vulkan/vk_platform.h external/vulkan/vulkan_core.h \
+ base/vulkanexamplebase.h base/keycodes.hpp base/VulkanTools.h \
+ base/VulkanInitializers.hpp base/VulkanDebug.h base/VulkanDevice.hpp \
+ base/VulkanBuffer.hpp base/VulkanSwapChain.hpp base/camera.hpp \
+ external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
+ external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp \
+ Maze/DrawableTriangle.h
+
+
+ Maze/VulkanExample.o: Maze/VulkanExample.cpp Maze/VulkanExample.h \
+ external/glm/glm/glm.hpp external/glm/glm/detail/_fixes.hpp \
+ external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
+ external/glm/glm/detail/type_int.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/type_float.hpp \
+ external/glm/glm/detail/type_vec.hpp \
+ external/glm/glm/detail/precision.hpp \
+ external/glm/glm/detail/type_mat.hpp external/glm/glm/vec2.hpp \
+ external/glm/glm/detail/type_vec2.hpp \
+ external/glm/glm/detail/type_vec2.inl external/glm/glm/vec3.hpp \
+ external/glm/glm/detail/type_vec3.hpp \
+ external/glm/glm/detail/type_vec3.inl external/glm/glm/vec4.hpp \
+ external/glm/glm/detail/type_vec4.hpp \
+ external/glm/glm/detail/type_vec4.inl \
+ external/glm/glm/detail/type_vec4_simd.inl external/glm/glm/mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.inl \
+ external/glm/glm/detail/func_matrix.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../mat2x3.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.inl \
+ external/glm/glm/detail/../mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.inl \
+ external/glm/glm/detail/../mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.inl \
+ external/glm/glm/detail/../mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.inl \
+ external/glm/glm/detail/../mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.inl \
+ external/glm/glm/detail/../mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.inl \
+ external/glm/glm/detail/../mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.inl \
+ external/glm/glm/detail/../mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.inl \
+ external/glm/glm/detail/../detail/type_mat4x4_simd.inl \
+ external/glm/glm/detail/func_matrix.inl \
+ external/glm/glm/detail/../geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.inl \
+ external/glm/glm/detail/../detail/func_exponential.hpp \
+ external/glm/glm/detail/../detail/type_vec1.hpp \
+ external/glm/glm/detail/../detail/type_vec1.inl \
+ external/glm/glm/detail/../detail/func_exponential.inl \
+ external/glm/glm/detail/../detail/func_vector_relational.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/func_vector_relational.inl \
+ external/glm/glm/detail/../detail/func_vector_relational_simd.inl \
+ external/glm/glm/detail/../detail/_vectorize.hpp \
+ external/glm/glm/detail/../detail/func_exponential_simd.inl \
+ external/glm/glm/detail/../detail/../simd/exponential.h \
+ external/glm/glm/detail/../detail/func_common.hpp \
+ external/glm/glm/detail/../detail/_fixes.hpp \
+ external/glm/glm/detail/../detail/func_common.inl \
+ external/glm/glm/detail/../detail/func_common_simd.inl \
+ external/glm/glm/detail/../detail/../simd/common.h \
+ external/glm/glm/detail/../detail/func_geometric_simd.inl \
+ external/glm/glm/detail/../detail/../simd/geometric.h \
+ external/glm/glm/detail/func_matrix_simd.inl \
+ external/glm/glm/detail/../simd/matrix.h \
+ external/glm/glm/trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.inl \
+ external/glm/glm/detail/func_trigonometric_simd.inl \
+ external/glm/glm/exponential.hpp external/glm/glm/common.hpp \
+ external/glm/glm/packing.hpp external/glm/glm/detail/func_packing.hpp \
+ external/glm/glm/detail/func_packing.inl \
+ external/glm/glm/detail/type_half.hpp \
+ external/glm/glm/detail/type_half.inl \
+ external/glm/glm/detail/func_packing_simd.inl \
+ external/glm/glm/matrix.hpp external/glm/glm/vector_relational.hpp \
+ external/glm/glm/integer.hpp external/glm/glm/detail/func_integer.hpp \
+ external/glm/glm/detail/func_integer.inl \
+ external/glm/glm/detail/func_integer_simd.inl \
+ external/glm/glm/detail/../simd/integer.h \
+ external/glm/glm/gtc/matrix_transform.hpp \
+ external/glm/glm/gtc/../gtc/constants.hpp \
+ external/glm/glm/gtc/../gtc/../detail/setup.hpp \
+ external/glm/glm/gtc/../gtc/constants.inl \
+ external/glm/glm/gtc/matrix_transform.inl external/vulkan/vulkan.h \
+ external/vulkan/vk_platform.h external/vulkan/vulkan_core.h \
+ base/vulkanexamplebase.h base/keycodes.hpp base/VulkanTools.h \
+ base/VulkanInitializers.hpp base/VulkanDebug.h base/VulkanDevice.hpp \
+ base/VulkanBuffer.hpp base/VulkanSwapChain.hpp base/camera.hpp \
+ external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
+ external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp
+
+Maze/Maze.o: Maze/Maze.cpp Maze/drawer.h \
+ Maze/VulkanExample.h external/glm/glm/glm.hpp \
+ external/glm/glm/detail/_fixes.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
+ external/glm/glm/detail/type_int.hpp external/glm/glm/detail/setup.hpp \
+ external/glm/glm/detail/type_float.hpp \
+ external/glm/glm/detail/type_vec.hpp \
+ external/glm/glm/detail/precision.hpp \
+ external/glm/glm/detail/type_mat.hpp external/glm/glm/vec2.hpp \
+ external/glm/glm/detail/type_vec2.hpp \
+ external/glm/glm/detail/type_vec2.inl external/glm/glm/vec3.hpp \
+ external/glm/glm/detail/type_vec3.hpp \
+ external/glm/glm/detail/type_vec3.inl external/glm/glm/vec4.hpp \
+ external/glm/glm/detail/type_vec4.hpp \
+ external/glm/glm/detail/type_vec4.inl \
+ external/glm/glm/detail/type_vec4_simd.inl external/glm/glm/mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.hpp \
+ external/glm/glm/detail/type_mat2x2.inl \
+ external/glm/glm/detail/func_matrix.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../mat2x3.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.hpp \
+ external/glm/glm/detail/../detail/type_mat2x3.inl \
+ external/glm/glm/detail/../mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.hpp \
+ external/glm/glm/detail/../detail/type_mat2x4.inl \
+ external/glm/glm/detail/../mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.hpp \
+ external/glm/glm/detail/../detail/type_mat3x2.inl \
+ external/glm/glm/detail/../mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.hpp \
+ external/glm/glm/detail/../detail/type_mat3x3.inl \
+ external/glm/glm/detail/../mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.hpp \
+ external/glm/glm/detail/../detail/type_mat3x4.inl \
+ external/glm/glm/detail/../mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.hpp \
+ external/glm/glm/detail/../detail/type_mat4x2.inl \
+ external/glm/glm/detail/../mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.hpp \
+ external/glm/glm/detail/../detail/type_mat4x3.inl \
+ external/glm/glm/detail/../mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.hpp \
+ external/glm/glm/detail/../detail/type_mat4x4.inl \
+ external/glm/glm/detail/../detail/type_mat4x4_simd.inl \
+ external/glm/glm/detail/func_matrix.inl \
+ external/glm/glm/detail/../geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.hpp \
+ external/glm/glm/detail/../detail/func_geometric.inl \
+ external/glm/glm/detail/../detail/func_exponential.hpp \
+ external/glm/glm/detail/../detail/type_vec1.hpp \
+ external/glm/glm/detail/../detail/type_vec1.inl \
+ external/glm/glm/detail/../detail/func_exponential.inl \
+ external/glm/glm/detail/../detail/func_vector_relational.hpp \
+ external/glm/glm/detail/../detail/setup.hpp \
+ external/glm/glm/detail/../detail/func_vector_relational.inl \
+ external/glm/glm/detail/../detail/func_vector_relational_simd.inl \
+ external/glm/glm/detail/../detail/_vectorize.hpp \
+ external/glm/glm/detail/../detail/func_exponential_simd.inl \
+ external/glm/glm/detail/../detail/../simd/exponential.h \
+ external/glm/glm/detail/../detail/func_common.hpp \
+ external/glm/glm/detail/../detail/_fixes.hpp \
+ external/glm/glm/detail/../detail/func_common.inl \
+ external/glm/glm/detail/../detail/func_common_simd.inl \
+ external/glm/glm/detail/../detail/../simd/common.h \
+ external/glm/glm/detail/../detail/func_geometric_simd.inl \
+ external/glm/glm/detail/../detail/../simd/geometric.h \
+ external/glm/glm/detail/func_matrix_simd.inl \
+ external/glm/glm/detail/../simd/matrix.h \
+ external/glm/glm/trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.hpp \
+ external/glm/glm/detail/func_trigonometric.inl \
+ external/glm/glm/detail/func_trigonometric_simd.inl \
+ external/glm/glm/exponential.hpp external/glm/glm/common.hpp \
+ external/glm/glm/packing.hpp external/glm/glm/detail/func_packing.hpp \
+ external/glm/glm/detail/func_packing.inl \
+ external/glm/glm/detail/type_half.hpp \
+ external/glm/glm/detail/type_half.inl \
+ external/glm/glm/detail/func_packing_simd.inl \
+ external/glm/glm/matrix.hpp external/glm/glm/vector_relational.hpp \
+ external/glm/glm/integer.hpp external/glm/glm/detail/func_integer.hpp \
+ external/glm/glm/detail/func_integer.inl \
+ external/glm/glm/detail/func_integer_simd.inl \
+ external/glm/glm/detail/../simd/integer.h \
+ external/glm/glm/gtc/matrix_transform.hpp \
+ external/glm/glm/gtc/../gtc/constants.hpp \
+ external/glm/glm/gtc/../gtc/../detail/setup.hpp \
+ external/glm/glm/gtc/../gtc/constants.inl \
+ external/glm/glm/gtc/matrix_transform.inl external/vulkan/vulkan.h \
+ external/vulkan/vk_platform.h external/vulkan/vulkan_core.h \
+ base/vulkanexamplebase.h base/keycodes.hpp base/VulkanTools.h \
+ base/VulkanInitializers.hpp base/VulkanDebug.h base/VulkanDevice.hpp \
+ base/VulkanBuffer.hpp base/VulkanSwapChain.hpp base/camera.hpp \
+ external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
+ external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp \
+ Maze/DrawableTriangle.h Maze/GameField.h Maze/Models.h Maze/Objects.h Maze/DTManager.h
