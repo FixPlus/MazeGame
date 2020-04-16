@@ -8,6 +8,7 @@ VulkanExample::VulkanExample(std::string windowName) : VulkanExampleBase(ENABLE_
 	rotation = { 0.0f, 15.0f, 0.0f };
 	title = windowName;
 	settings.overlay = true;
+    UIOverlay.visible = true;
 }
 
 VulkanExample::~VulkanExample()
@@ -426,7 +427,7 @@ void VulkanExample::buildCommandBuffers()
 
 		vkCmdDrawIndexed(drawCmdBuffers[i], indexCount, 1, 0, 0, 0);
 
-//		drawUI(drawCmdBuffers[i]);
+		drawUI(drawCmdBuffers[i]);
 
 		vkCmdEndRenderPass(drawCmdBuffers[i]);
 
@@ -888,6 +889,15 @@ void VulkanExample::moveCameraDown(float distance){
 	glm::vec4 dir =glm::vec4(0.0f, -distance, 0.0f, 1.0f);
 	dir = dir * rotateMat;
 	cameraPos += glm::vec3(dir);
+}
+
+void VulkanExample::OnUpdateUIOverlay(vks::UIOverlay *overlay)
+{
+	if (overlay->header("Settings")) {
+		if (overlay->sliderFloat("LOD bias", &uboVS.lodBias, 0.0f, 10)) {
+			updateUniformBuffers();
+		}
+	}
 }
 
 void VulkanExample::viewChanged()

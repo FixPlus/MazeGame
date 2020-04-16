@@ -6,6 +6,8 @@
 
 namespace triGraphic{
 
+extern int* counter;
+
 enum WindowStyle{WS_WINDOWED, WS_FULLSCREEN};
 
 
@@ -60,6 +62,12 @@ public:
 	void moveCamera(glm::vec3 newPos){
 		cameraPos = newPos;
 	}
+	
+	void OnUpdateUIOverlay(vks::UIOverlay *overlay)
+	{
+		overlay->text("%d coins left", *counter);
+	}
+
 
 
 

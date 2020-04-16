@@ -22,7 +22,7 @@ using namespace triGraphic;
 
 Drawer* drawer;
 PlayerObject<SimpleArrow>* player;
-
+int* triGraphic::counter = &CoinObject::count;
 
 
 
@@ -245,6 +245,7 @@ int main(int argc, char** argv){
 	camKeep = CameraKeeper{drawer, player, {-70.0f,-60.0f,-70.0f}};
 	camKeep.scaleDisposal(0.5);
 
+	drawer->updateOverlay();
 
 // GAME LOOP STARTS HERE
 

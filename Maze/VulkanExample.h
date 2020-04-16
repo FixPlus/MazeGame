@@ -151,6 +151,6 @@ public:
 
 	virtual void viewChanged();
 
-
+    void OnUpdateUIOverlay(vks::UIOverlay *overlay);
 
 };

@@ -98,9 +98,9 @@ std::string VulkanExampleBase::getWindowTitle()
 	std::string device(deviceProperties.deviceName);
 	std::string windowTitle;
 	windowTitle = title + " - " + device;
-	/*if (!settings.overlay) {
+	if (!settings.overlay) {
 		windowTitle += " - " + std::to_string(frameCounter) + " fps";
-	}*/
+	}
 	return windowTitle;
 }
 
@@ -215,18 +215,19 @@ void VulkanExampleBase::prepare()
 	setupRenderPass();
 	createPipelineCache();
 	setupFrameBuffer();
-/*	settings.overlay = settings.overlay && (!benchmark.active);
+	settings.overlay = settings.overlay && (!benchmark.active);
 	if (settings.overlay) {
-		UIOverlay.device = vulkanDevice;
+		
+UIOverlay.device = vulkanDevice;
 		UIOverlay.queue = queue;
 		UIOverlay.shaders = {
-			loadShader(getAssetPath() + "shaders/base/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-			loadShader(getAssetPath() + "shaders/base/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
+			loadShader("shaders/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+			loadShader("shaders/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 		};
 		UIOverlay.prepareResources();
 		UIOverlay.preparePipeline(pipelineCache, renderPass);
 	}
-*/
+
 }
 
 VkPipelineShaderStageCreateInfo VulkanExampleBase::loadShader(std::string fileName, VkShaderStageFlagBits stage)
@@ -287,7 +288,7 @@ void VulkanExampleBase::renderFrame()
 		lastTimestamp = tEnd;
 	}
 	// TODO: Cap UI overlay update rates
-	//updateOverlay();
+	updateOverlay();
 }
 
 void VulkanExampleBase::preRenderLoop(){
@@ -332,19 +333,19 @@ void VulkanExampleBase::renderLoop()
 		float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - lastTimestamp).count();
 		if (fpsTimer > 1000.0f)
 		{
-			/*if (!settings.overlay)
+			if (!settings.overlay)
 			{
 				std::string windowTitle = getWindowTitle();
 				xcb_change_property(connection, XCB_PROP_MODE_REPLACE,
 					window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8,
 					windowTitle.size(), windowTitle.c_str());
-			}*/
+			}
 			lastFPS = (float)frameCounter * (1000.0f / fpsTimer);
 //			std::cout << lastFPS << std::endl;
 			frameCounter = 0;
 			lastTimestamp = tEnd;
 		}
-		//updateOverlay();
+		updateOverlay();
 	// Flush device to make sure all resources can be freed
 }
 
@@ -354,12 +355,11 @@ void VulkanExampleBase::postRenderLoop(){
 	}	
 }
 
-/*void VulkanExampleBase::updateOverlay()
+void VulkanExampleBase::updateOverlay()
 {
 	if (!settings.overlay)
 		return;
-
-	ImGuiIO& io = ImGui::GetIO();
+  	ImGuiIO& io = ImGui::GetIO();
 
 	io.DisplaySize = ImVec2((float)width, (float)height);
 	io.DeltaTime = frameTimer;
@@ -370,27 +370,52 @@ void VulkanExampleBase::postRenderLoop(){
 
 	ImGui::NewFrame();
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
-	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-	ImGui::TextUnformatted(title.c_str());
-	ImGui::TextUnformatted(deviceProperties.deviceName);
-	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 5.0f * UIOverlay.scale));
-#endif
-	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
+
+
+
+	//FIRST WINDOW
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::SetNextWindowPos(ImVec2(width * 0.1, height * 0.8));
+	ImGui::SetNextWindowSize(ImVec2(width * 0.1, height * 0.2), ImGuiSetCond_FirstUseEver);
+	ImGui::Begin("This is the Maze Game", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove| ImGuiWindowFlags_NoCollapse);
+	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
 	OnUpdateUIOverlay(&UIOverlay);
+
+	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
 	ImGui::PopItemWidth();
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	ImGui::PopStyleVar();
-#endif
+
 
 	ImGui::End();
 	ImGui::PopStyleVar();
+//	ImGui::Render();
+	
+
+
+	//SECOND WINDOW
+/*
+//	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 1);
+	ImGui::SetNextWindowPos(ImVec2(500, 500));
+	ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiSetCond_Once);
+	ImGui::Begin("This is theFFF Maze Game", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+//	ImGui::TextUnformatted(title.c_str());
+//	ImGui::TextUnformatted(deviceProperties.deviceName);
+//	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
+
+	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
+	ImGui::PopItemWidth();
+
+
+	ImGui::End();
+//	ImGui::PopStyleVar();
+*/
+
+
+
 	ImGui::Render();
+
+
 
 	if (UIOverlay.update() || UIOverlay.updated) {
 		buildCommandBuffers();
@@ -402,9 +427,9 @@ void VulkanExampleBase::postRenderLoop(){
 		mouseButtons.left = false;
 	}
 #endif
-}*/
+}
 
-/*void VulkanExampleBase::drawUI(const VkCommandBuffer commandBuffer)
+void VulkanExampleBase::drawUI(const VkCommandBuffer commandBuffer)
 {
 	if (settings.overlay) {
 		const VkViewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
@@ -414,7 +439,7 @@ void VulkanExampleBase::postRenderLoop(){
 
 		UIOverlay.draw(commandBuffer);
 	}
-}*/
+}
 
 void VulkanExampleBase::prepareFrame()
 {
@@ -586,10 +611,10 @@ VulkanExampleBase::~VulkanExampleBase()
 		vkDestroyFence(device, fence, nullptr);
 	}
 
-/*	if (settings.overlay) {
+	if (settings.overlay) {
 		UIOverlay.freeResources();
 	}
-*/
+
 	delete vulkanDevice;
 
 	if (settings.validation)
@@ -948,9 +973,9 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 			paused = !paused;
 			break;
 		case KEY_F1:
-/*			if (settings.overlay) {
+			if (settings.overlay) {
 				UIOverlay.visible = !UIOverlay.visible;
-			} */
+			} 
 			break;
 		case KEY_ESCAPE:
 			PostQuitMessage(0);
@@ -1119,10 +1144,10 @@ int32_t VulkanExampleBase::handleAppInput(struct android_app* app, AInputEvent* 
 					}					
 					case AMOTION_EVENT_ACTION_MOVE: {
 						bool handled = false;
-						/*if (vulkanExample->settings.overlay) {
+						if (vulkanExample->settings.overlay) {
 							ImGuiIO& io = ImGui::GetIO();
 							handled = io.WantCaptureMouse;
-						}*/					
+						}*				
 						if (!handled) {
 							int32_t eventX = AMotionEvent_getX(event, 0);
 							int32_t eventY = AMotionEvent_getY(event, 0);
@@ -1385,9 +1410,9 @@ void VulkanExampleBase::keyboardKey(struct wl_keyboard *keyboard,
 			paused = !paused;
 		break;
 	case KEY_F1:
-		/*if (state && settings.overlay)
+		if (state && settings.overlay)
 			settings.overlay = !settings.overlay;
-		break;*/
+		break;
 	case KEY_ESC:
 		quit = true;
 		break;
@@ -1724,9 +1749,9 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 				paused = !paused;
 				break;
 			case KEY_F1:
-				/*if (settings.overlay) {
+				if (settings.overlay) {
 					settings.overlay = !settings.overlay;
-				}*/
+				}
 				break;				
 		}
 	}
@@ -1976,9 +2001,9 @@ void VulkanExampleBase::windowResize()
 	setupFrameBuffer();
 
 	if ((width > 0.0f) && (height > 0.0f)) {
-	/*	if (settings.overlay) {
+		if (settings.overlay) {
 			UIOverlay.resize(width, height);
-		}*/
+		}
 	}
 
 	// Command buffers need to be recreated as they may store
@@ -2016,10 +2041,10 @@ void VulkanExampleBase::handleMouseMove(int32_t x, int32_t y)
 
 	bool handled = false;
 
-	/*if (settings.overlay) {
+	if (settings.overlay) {
 		ImGuiIO& io = ImGui::GetIO();
 		handled = io.WantCaptureMouse;
-	}*/
+	}
 	mouseMoved((float)x, (float)y, handled);
 
 	if (handled) {
@@ -2074,4 +2099,4 @@ void VulkanExampleBase::setupSwapChain()
 	swapChain.create(&width, &height, settings.vsync);
 }
 
-//void VulkanExampleBase::OnUpdateUIOverlay(vks::UIOverlay *overlay) {}
+void VulkanExampleBase::OnUpdateUIOverlay(vks::UIOverlay *overlay) {}
