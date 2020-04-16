@@ -45,7 +45,7 @@ compile_shaders:
 	./shaders/glslc ./shaders/triangle.vert -o ./shaders/triangle.vert.spv
 	./shaders/glslc ./shaders/triangle.frag -o ./shaders/triangle.frag.spv
 	./shaders/glslc ./shaders/uioverlay.frag -o ./shaders/uioverlay.frag.spv
-	./shaders/glslc ./shaders/uioverlay.frag -o ./shaders/uioverlay.frag.spv
+	./shaders/glslc ./shaders/uioverlay.vert -o ./shaders/uioverlay.vert.spv
 
 
 clean:
