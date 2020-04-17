@@ -43,7 +43,7 @@ Use "make clean" to clean compiled binary files
 			2) Make Models for the game (not started yet)
 
 
-**EXTRA TODO LIST***
+**EXTRA TODO LIST**
 
 	TODO: Animation implementation
 
