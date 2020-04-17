@@ -2,6 +2,7 @@
 #include "GameField.h"
 #include "Models.h"
 #include "Objects.h"
+#include "MazeUI.h"
 #include <unistd.h>
 #include <ctime>
 #include <list>
@@ -12,27 +13,84 @@
 /*
 	Maze Game 3D
 
-	Simple 3D game coded just for fun.
+	Simple 3D game coded 
 
-	Bushev Dmitry 2019 - 2020
+	for university project.
+
+	Bushev Dmitry, Evgeniya Korelskaya 
+
+	2019 - 2020
 
 */
+
+
+
+
+/* Primary TODO list for the project:
+
+	TODO: make UI  (in process)
+		description:
+			Windows and buttons, that display in-game info
+			and collect user input
+
+			1) Make a wrapping above the ImGui (almost done)
+			2) Make a class that will manage the preparation of UI (not started)
+
+			3) Fix some bugs with windows appering due to screen size change
+
+
+	TODO: make MECH_MANGER (not started yet)
+		decription:
+			class or bunch of classes, that organize game proccess
+			like level preparation, object spawning and destruction (though objs are owned by gameField, 
+			but not managed by it)
+
+			1) Make sure we know what we want be in the game, how it will be look like (in proccess)
+			2) Create MECH_MANAGER, imply all our ideas about game process (not started yet)
+
+
+	TODO: Texture and model loading arrangement (in proccess)
+		description:
+			As it is poorly arranged on current stage of the project
+			it will be hard to expand the list of 3D models in the next stages
+			So it definitely needs to be organized in the way to avoid much 
+			hardcoded chuncks (for example it could be managed to load models from files) 
+			
+			1) Arrange satisfactory system of texture and model loading(in process)
+			2) Make Models for the game (not started yet)
+
+
+	**********************************EXTRA TODO LIST**********************************
+
+	TODO: Animation implementation
+
+	TODO: Sound effects implementation
+
+
+*/
+
+
 
 using namespace triGraphic;
 
 Drawer* drawer;
-PlayerObject<SimpleArrow>* player;
-int* triGraphic::counter = &CoinObject::count;
+PlayerObject<SimpleArrow>* player; // TODO: Move player object in MECH_MANAGER class
 
 
 
 DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
 CellField MazeGame::gameField;    // Global game field - core object of the game, used by all in game objects
 FieldModel* MazeGame::fieldModel; // Global field model, that used to draw a game field and other enviropment
+MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
+
 int CoinObject::count = 0;
+bool force_quit = false;
 
 
 
+
+
+// TODO:: move CameraKeeper out of Maze.cpp, rearrange camera control
 
 class CameraKeeper final {
 	
@@ -72,6 +130,9 @@ public:
 
 CameraKeeper camKeep;
 
+
+
+// TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
 
 void gameHandleEvents(const xcb_generic_event_t *event){
 //	std::cout << "Event id:" << (event->response_type & 0x7f) <<  std::endl;
@@ -169,6 +230,10 @@ int main(int argc, char** argv){
 	enum WindowStyle style = WS_WINDOWED;
 
 	int number_of_creatures = 5;
+
+
+	//TODO: move args reading and proccessing out of main() to some function/class
+
 	for(int i = 0; i < argc; i++){
 		std::string arg = argv[i];
 		if(arg == FULLSCREEN_MSG)
@@ -203,6 +268,9 @@ int main(int argc, char** argv){
 
 // STEP 2 : Creating and generating a gameField
 
+
+	// TODO: rearrange the gameField creation and recreation inside game mechanics class(aka MECH_MANAGER) and make it free out of triangle manager   
+
 	MazeGame::gameField = CellField{fieldSize, fieldSize};
 	MazeGame::gameField.generateRandomMaze();
 
@@ -211,7 +279,11 @@ int main(int argc, char** argv){
 	MazeGame::triManager = DTManager{drawer, polysRequested(), 20000};
 
 
-// STEP 4: Setting up models
+// STEP 4: Setting up models and constructing game objects
+
+
+
+	//TODO: organize GameObjects creation in some manager class (aka MECH_MANAGER), move there all game mechanics realization
 
 	MazeGame::fieldModel = new FieldModel{};
 
@@ -237,7 +309,7 @@ int main(int argc, char** argv){
 	}
 
 
-// STEP 5: finishing initialization, updaating static vertices and setting up camera
+// STEP 5: finishing initialization, updating static vertices and setting up camera
 
 	drawer->updateStaticVertices();
 
@@ -245,15 +317,43 @@ int main(int argc, char** argv){
 	camKeep = CameraKeeper{drawer, player, {-70.0f,-60.0f,-70.0f}};
 	camKeep.scaleDisposal(0.5);
 
+//STEP 5.1 initializing user interface 
+
+	//TODO: make a special class managing intialization and re-initialization of UI 
+
+	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.8f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	testWindow->addNewItem(new MazeUI::StatText<int>(&CoinObject::count, "Coins left"));
+	testWindow->addNewItem(new MazeUI::StatText<float>(&player->x, "x"));
+	testWindow->addNewItem(new MazeUI::StatText<float>(&player->y, "y"));
+	testWindow->addNewItem(new MazeUI::Button("More coins!", [](){
+		Cell cell;
+		do{
+			cell = *MazeGame::gameField.getRandomCell(CellType::PATH);
+		}while(MazeGame::gameField.isThereObjectsInCell(cell.x, cell.y));
+
+		MazeGame::gameField.addNewGameObject(new CoinObject{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
+	
+	}));
+
+
+	MazeUI::Window* exitWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+	exitWindow->addNewItem(new MazeUI::Button("Exit", [](){
+		force_quit = true;
+	}));
+
+
+	MazeUI::manager.addNewElement(testWindow);
+	MazeUI::manager.addNewElement(exitWindow);
+
 	drawer->updateOverlay();
 
 // GAME LOOP STARTS HERE
 
-	while(!drawer->shouldQuit() && CoinObject::count > 0){
+	while(!drawer->shouldQuit() && CoinObject::count > 0 && !force_quit){
 
 		auto tStart = std::chrono::high_resolution_clock::now();
 
-		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE
+		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
 
 		drawer->handleEvents(); // LISTENING TO USER INPUT
 	//	player->moveInDirection();
@@ -295,3 +395,6 @@ int main(int argc, char** argv){
 
 
 } // triangle manager and game field are destroyed here
+
+
+

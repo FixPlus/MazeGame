@@ -94,7 +94,8 @@ base/vulkanexamplebase.o: base/vulkanexamplebase.cpp base/vulkanexamplebase.h \
  external/glm/glm/gtc/quaternion.inl \
  external/glm/glm/gtc/quaternion_simd.inl \
  external/glm/glm/gtc/matrix_transform.hpp \
- external/glm/glm/gtc/matrix_transform.inl base/benchmark.hpp
+ external/glm/glm/gtc/matrix_transform.inl base/benchmark.hpp \
+ Maze/MazeUI.h
 base/VulkanTools.o: base/VulkanTools.cpp base/VulkanTools.h \
  external/vulkan/vulkan.h external/vulkan/vk_platform.h \
  external/vulkan/vulkan_core.h base/VulkanInitializers.hpp
@@ -477,4 +478,5 @@ Maze/Maze.o: Maze/Maze.cpp Maze/drawer.h \
  base/VulkanBuffer.hpp base/VulkanSwapChain.hpp base/camera.hpp \
  external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
  external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp \
- Maze/DrawableTriangle.h Maze/GameField.h Maze/Models.h Maze/Objects.h Maze/DTManager.h
+ Maze/DrawableTriangle.h Maze/GameField.h Maze/Models.h Maze/Objects.h Maze/DTManager.h \
+ Maze/MazeUI.h

@@ -51,6 +51,7 @@ struct Cell {
 		for(int i = 0; i < objects.size(); i++, it++){
 			if(obj == *it){
 				objects.erase(it);
+				return;
 			}
 		}
 	}
@@ -224,9 +225,9 @@ public:
 
 		cells[index].type = type;
 	};
-	void clear(){
+	void clear(CellType type = CellType::WALL){
 		for(auto& cell: cells)
-			cell.type = CellType::WALL;
+			cell.type = type;
 	}
 
 	Cell* getNeiCell(Cell* cell, enum Dirs dir) {
@@ -346,7 +347,8 @@ public:
 			cell->type = CellType::WALL;	
 		}
 	}
-	void generateRandomMaze(int straightness = 5){
+	
+	void generateRandomMaze(int straightness = 5, float cycleness = 1.0){
 		clear();
 		Cell* cell = getRandomCell(CellType::ANY);
 
@@ -389,13 +391,13 @@ public:
 			}
 		}
 	//generating cycles:
-		int cycles = width * height / 50;
+		int cycles = width * height / 50 * cycleness;
 		for(int i = 0; i < cycles; i++){
 			int attemptsPassed = 0;
 			do{
 				cell = getRandomCell(CellType::WALL);
 				attemptsPassed++;
-			}while(!isStraightWall(cell) || attemptsPassed < 1000);
+			}while(!isStraightWall(cell) && attemptsPassed < 1000);
 			
 			cell->type = CellType::PATH;
 		}
@@ -609,7 +611,7 @@ public:
 			y = static_cast<float>(yFrom) * (1.0f - progression) + static_cast<float>(yDest) * progression;
 			if(progression >= 1.0f){
 				parent->removeObject(this);
-				parent  =destination;
+				parent = destination;
 
 				x = destination->x;
 				y = destination->y;

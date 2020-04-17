@@ -6,7 +6,6 @@
 
 namespace triGraphic{
 
-extern int* counter;
 
 enum WindowStyle{WS_WINDOWED, WS_FULLSCREEN};
 
@@ -65,7 +64,6 @@ public:
 	
 	void OnUpdateUIOverlay(vks::UIOverlay *overlay)
 	{
-		overlay->text("%d coins left", *counter);
 	}
 
 

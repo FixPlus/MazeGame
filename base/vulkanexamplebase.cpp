@@ -10,7 +10,7 @@
 
 #include "vulkanexamplebase.h"
 #include <unistd.h>
-
+#include "../Maze/MazeUI.h"
 std::vector<const char*> VulkanExampleBase::args;
 
 VkResult VulkanExampleBase::createInstance(bool enableValidation)
@@ -368,12 +368,11 @@ void VulkanExampleBase::updateOverlay()
 	io.MouseDown[0] = mouseButtons.left;
 	io.MouseDown[1] = mouseButtons.right;
 
-	ImGui::NewFrame();
+
+	MazeUI::manager.update(width, height);
 
 
-
-
-
+/*
 	//FIRST WINDOW
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -381,14 +380,16 @@ void VulkanExampleBase::updateOverlay()
 	ImGui::SetNextWindowSize(ImVec2(width * 0.1, height * 0.2), ImGuiSetCond_FirstUseEver);
 	ImGui::Begin("This is the Maze Game", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove| ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
-	OnUpdateUIOverlay(&UIOverlay);
 
 	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
+	OnUpdateUIOverlay(&UIOverlay);
 	ImGui::PopItemWidth();
 
 
 	ImGui::End();
 	ImGui::PopStyleVar();
+
+*/
 //	ImGui::Render();
 	
 
@@ -413,7 +414,6 @@ void VulkanExampleBase::updateOverlay()
 
 
 
-	ImGui::Render();
 
 
 
