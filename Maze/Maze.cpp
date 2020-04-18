@@ -84,6 +84,9 @@ FieldModel* MazeGame::fieldModel; // Global field model, that used to draw a gam
 MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
 
 int CoinObject::count = 0;
+int GameObject::count = 0;
+template<typename AnyDynamicModel>
+int Cannon<AnyDynamicModel>::next_id = 1;
 bool force_quit = false;
 
 
@@ -156,6 +159,7 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 					player->changeDirection(player->getDir() + 1);
 					break;
 				case KEY_R:
+					MazeGame::gameField.addNewGameObject(new Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
 					break;
 				case KEY_P:
 					break;
@@ -215,6 +219,17 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 
 }
 
+
+
+void spawnCannon(){
+	Cell cell;
+	do{
+		cell = *MazeGame::gameField.getRandomCell(CellType::PATH);
+	}while(MazeGame::gameField.isThereObjectsInCell(cell.x, cell.y));
+
+	MazeGame::gameField.addNewGameObject(new Cannon<SimpleArrow>{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
+
+}
 
 
 
@@ -289,6 +304,7 @@ int main(int argc, char** argv){
 
 	
 
+
 	Cell init = *MazeGame::gameField.getRandomCell(CellType::PATH);
 
 
@@ -299,13 +315,14 @@ int main(int argc, char** argv){
 			init = *MazeGame::gameField.getRandomCell(CellType::PATH);
 		}while(MazeGame::gameField.isThereObjectsInCell(init.x, init.y));
 
-		MazeGame::gameField.addNewGameObject(new Seeker<SimpleOctagon>{init.x, init.y, 5.0f, 5.0f, {1.0f, 1.0f, 1.0f}, player});
+		//MazeGame::gameField.addNewGameObject(new Seeker<SimpleOctagon>{init.x, init.y, 5.0f, 5.0f, {1.0f, 1.0f, 1.0f}, player});
 
 		do{
 			init = *MazeGame::gameField.getRandomCell(CellType::PATH);
 		}while(MazeGame::gameField.isThereObjectsInCell(init.x, init.y));
 
 		MazeGame::gameField.addNewGameObject(new CoinObject{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f});
+		spawnCannon();
 	}
 
 
@@ -321,8 +338,9 @@ int main(int argc, char** argv){
 
 	//TODO: make a special class managing intialization and re-initialization of UI 
 
-	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.8f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	testWindow->addNewItem(new MazeUI::StatText<int>(CoinObject::count, "Coins left"));
+	testWindow->addNewItem(new MazeUI::StatText<int>(GameObject::count, "Objects"));
 	testWindow->addNewItem(new MazeUI::StatText<float>(player->x, "x"));
 	testWindow->addNewItem(new MazeUI::StatText<float>(player->y, "y"));
 	testWindow->addNewItem(new MazeUI::Button("More coins!", [](){
@@ -332,6 +350,7 @@ int main(int argc, char** argv){
 		}while(MazeGame::gameField.isThereObjectsInCell(cell.x, cell.y));
 
 		MazeGame::gameField.addNewGameObject(new CoinObject{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
+		spawnCannon();
 	
 	}));
 

@@ -80,14 +80,15 @@ class DirectedObject: public virtual ModeledObject {
 protected:
 	int dir = 2;
 public:
-	explicit DirectedObject(int idir = 2): dir(idir) {};
-
+	explicit DirectedObject(int idir = 2): dir(idir) { };
 
 	void changeDirection(int newDir){
 		int div = newDir % 4 - dir;
 		rotate({0.0f, 1.0f, 0.0f}, -div * 90.0f);
 		dir = newDir % 4;
 	};
+
+
 
 
 	int getDir(){
@@ -278,6 +279,165 @@ public:
 				expired = true;
 				break;
 			}
+		}
+	};
+
+};
+
+
+template <typename AnyDynamicModel>
+class Bullet: public DynamicDirectedObject, public AnyDynamicModel{
+	int id;
+public:
+	explicit Bullet(float ix = 0, float iy = 0, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
+	GameObject(ix, iy), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), id(iid){ transparent_ = true; setInPosition(); };
+
+	ObjectInfo getInfo() const override{
+		return {ObjectType::POWERUP, id};
+	};
+	bool canMove(Cell const* from, Cell const* into) override{
+		return (into);
+	}
+
+	void update(float dt) override{
+		if(parent->type == CellType::WALL){
+			expired = true;
+		}
+		if(!isMoving())
+			moveInDirection();
+
+		DynamicDirectedObject::update(dt);
+	}
+
+
+	void interact(GameObject* another) override{
+		ObjectInfo info = another->getInfo();
+		switch(info.type){
+			case ObjectType::PLAYER: {
+				//std::cout << "SHOT" << std::endl;
+				if(id == 0)
+					return;
+				break;
+			}
+			case ObjectType::NPC: {
+				if(info.data == id || info.data == 2)
+					return;
+/*			speed -= 0.2f;
+				if(speed < 0.2f)
+					speed = 0.2f;
+*/
+				break;
+			}
+			case ObjectType::POWERUP:{
+				return;
+			}
+		}
+		expired = true;
+	}
+
+};
+
+template <typename AnyDynamicModel>
+class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
+	
+	float launch_timer = 0.0;
+	float fire_rate;
+	float state_timer = 0.0;
+	float next_state_time = 1.0;
+	int id;
+	static int next_id;
+	enum CannonState {CS_FIRING, CS_GATHERING, CS_IDLE} state = CS_FIRING;
+
+	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+public:
+	explicit Cannon(float ix = 0, float iy = 0, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
+	GameObject(ix, iy), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), fire_rate(fr) { setInPosition(); id = next_id++;};
+
+	ObjectInfo getInfo() const override{
+		return {ObjectType::NPC, id};
+	};
+
+	void update(float dt) override{
+		DynamicDirectedObject::update(dt);
+		switch(state){
+			case CS_FIRING:{
+				launch_timer += dt;
+				if(launch_timer > 1.0 / fire_rate){
+					MazeGame::gameField.addNewGameObject(new Bullet<SimpleOctagon>{static_cast<float>(parent->x), static_cast<float>(parent->y), 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
+					launch_timer = 0.0;
+				}
+				break;
+			}
+			case CS_GATHERING:{
+				if(isMoving())
+					break;
+				bool prob_dirs[4] = {false};
+				int count_dirs = 0;
+				bool back_is_possible = false;
+				for(int i = 0; i < 4; ++i){
+
+					Cell* dest = MazeGame::gameField.getNeiCell(getCell(), static_cast<enum Dirs>(i * 2));
+					if(dest && canMove(parent, dest)){
+						if(i != ((dir + 2) % 4)){
+							count_dirs++;
+							prob_dirs[i] = true;
+						}
+						else
+							back_is_possible =  true;
+					}
+				}
+
+				if(count_dirs == 0)
+					if(back_is_possible){
+						prob_dirs[((dir + 2) % 4)] = true;
+						count_dirs = 1;
+					}
+					else{
+						state_timer = next_state_time;
+						break;
+					}
+
+				int next_dir = rand() % count_dirs + 1;
+				int i;
+				for(i = 0; next_dir != 0; i++){
+					if(prob_dirs[i])
+						next_dir--;
+				}
+				i--;
+				changeDirection(i);
+				moveInDirection();
+				break;
+			}
+			case CS_IDLE:{
+				break;
+			}
+		}
+		state_timer += dt;
+		if(state_timer >= next_state_time){
+			state_timer = 0.0;
+			next_state_time = static_cast<float>(rand() % 5 + 5) / 5.0f;
+			state = static_cast<enum CannonState>((static_cast<int>(state) + rand() % 2) % 3);
+			setColor(stateColors[static_cast<int>(state)]);
+		}
+	}
+
+	void interact(GameObject* another) override{
+		ObjectInfo info = another->getInfo();
+		switch(info.type){
+			case ObjectType::PLAYER: {
+			//	expired = true;
+				break;
+			}
+			case ObjectType::POWERUP: {
+				if(info.data != id)
+					expired = true;
+/*			speed -= 0.2f;
+				if(speed < 0.2f)
+					speed = 0.2f;
+*/
+				break;
+			}
+			default:{}
 		}
 	};
 

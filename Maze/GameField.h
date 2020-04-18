@@ -68,6 +68,9 @@ protected:
 	bool transparent_ = false;
 	bool expired = false;
 public:	
+
+	static int count;
+
 	float x, y;
 
 	Cell* getCell();
@@ -76,7 +79,7 @@ public:
 	}
 
 	explicit GameObject(float ix = 0, float iy = 0):
-	 x(ix), y(iy){ parent = getCell(); getCell()->addNewObject(this);};
+	 x(ix), y(iy){ parent = getCell(); getCell()->addNewObject(this); count++;};
 
 
 	bool isExpired() const{
@@ -102,6 +105,7 @@ public:
 	};
 
 	virtual ~GameObject(){
+		count--;
 		parent->removeObject(this);
 	};
 };
@@ -181,17 +185,15 @@ public:
 	};
 
 	void update(float dt) {
-		for(auto& object: objects){
-			if(object != nullptr){
+		for(auto& object: objects)
+			if(object != nullptr)
 				object->update(dt);
 
-			for(auto& nei: object->getCell()->objects)
+
+		for(auto& object: objects)
+			for(auto& nei: object->getParent()->objects)
 				if(nei != object && object->getParent() == nei->getParent()) 
 					object->interact(nei);
-			
-
-			}
-		}
 
 		for(auto& object: objects)
 			if(object->isExpired()){
