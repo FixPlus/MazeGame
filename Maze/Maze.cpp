@@ -227,7 +227,7 @@ int main(int argc, char** argv){
 
 
 	int fieldSize = 50;
-	enum WindowStyle style = WS_WINDOWED;
+	enum WindowStyle style = WS_FULLSCREEN;
 
 	int number_of_creatures = 5;
 
@@ -236,8 +236,8 @@ int main(int argc, char** argv){
 
 	for(int i = 0; i < argc; i++){
 		std::string arg = argv[i];
-		if(arg == FULLSCREEN_MSG)
-			style = WS_FULLSCREEN;
+//		if(arg == FULLSCREEN_MSG)
+//			style = WS_FULLSCREEN;
 		if(arg == FIELD_SIZE_MSG){
 			if(i + 1 == argc){
 				std::cout << "You should input NUMBER after '"<<  arg <<"' token!" << std::endl;
@@ -276,7 +276,7 @@ int main(int argc, char** argv){
 
 // STEP 3 : Initializing triangle manager
 
-	MazeGame::triManager = DTManager{drawer, polysRequested(), 20000};
+	MazeGame::triManager = DTManager{drawer, 25000, 20000};
 
 
 // STEP 4: Setting up models and constructing game objects
@@ -322,9 +322,9 @@ int main(int argc, char** argv){
 	//TODO: make a special class managing intialization and re-initialization of UI 
 
 	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.8f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	testWindow->addNewItem(new MazeUI::StatText<int>(&CoinObject::count, "Coins left"));
-	testWindow->addNewItem(new MazeUI::StatText<float>(&player->x, "x"));
-	testWindow->addNewItem(new MazeUI::StatText<float>(&player->y, "y"));
+	testWindow->addNewItem(new MazeUI::StatText<int>(CoinObject::count, "Coins left"));
+	testWindow->addNewItem(new MazeUI::StatText<float>(player->x, "x"));
+	testWindow->addNewItem(new MazeUI::StatText<float>(player->y, "y"));
 	testWindow->addNewItem(new MazeUI::Button("More coins!", [](){
 		Cell cell;
 		do{
@@ -342,8 +342,26 @@ int main(int argc, char** argv){
 	}));
 
 
+	int straightness = 5;
+	int cycles = 3;
+
+	MazeUI::Window* debugWindow = new MazeUI::Window("Maze params", 0.7f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameField.getHeight(), "Height"));
+	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameField.getWidth(), "Width"));
+	debugWindow->addNewItem(new MazeUI::InputBox("Straightness", straightness, 0, 20));
+	debugWindow->addNewItem(new MazeUI::InputBox("Cycleness", cycles, 0, 10));
+	
+	debugWindow->addNewItem(new MazeUI::Button("Recreate Maze", [&straightness, &cycles](){
+		MazeGame::gameField.generateRandomMaze(straightness, static_cast<float>(cycles));
+		delete MazeGame::fieldModel;
+		MazeGame::fieldModel = new FieldModel{};
+		drawer->updateStaticVertices();
+	}));
+
+
 	MazeUI::manager.addNewElement(testWindow);
 	MazeUI::manager.addNewElement(exitWindow);
+	MazeUI::manager.addNewElement(debugWindow);
 
 	drawer->updateOverlay();
 

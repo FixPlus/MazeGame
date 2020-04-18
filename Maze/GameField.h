@@ -225,6 +225,7 @@ public:
 
 		cells[index].type = type;
 	};
+
 	void clear(CellType type = CellType::WALL){
 		for(auto& cell: cells)
 			cell.type = type;
@@ -399,7 +400,8 @@ public:
 				attemptsPassed++;
 			}while(!isStraightWall(cell) && attemptsPassed < 1000);
 			
-			cell->type = CellType::PATH;
+			if(isStraightWall(cell))
+				cell->type = CellType::PATH;
 		}
 
 	};
@@ -471,11 +473,11 @@ public:
 
 	};
 
-	int getWidth(){
+	int const& getWidth() const{
 		return width;
 	};
 
-	int getHeight(){
+	int const& getHeight() const{
 		return height;
 	}
 

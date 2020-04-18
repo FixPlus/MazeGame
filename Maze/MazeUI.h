@@ -89,20 +89,39 @@ class StatText: public Text {
 
 
 */
-	Stat* stat_;
+	Stat const& stat_;
 	std::string stat_name_;
 public:
-	StatText(Stat* stat, std::string const& stat_name = "Stat"): stat_(stat), stat_name_(stat_name){
-		//TODO add exception on NULL stat
+	StatText(Stat const& stat, std::string const& stat_name = "Stat"): stat_(stat), stat_name_(stat_name){
 		std::ostringstream oss;
-		oss << stat_name_ << ": " << *stat_;
+		oss << stat_name_ << ": " << stat_;
 		text = oss.str();
 	}
 	void update() override{
 		std::ostringstream oss;
-		oss << stat_name_ << ": " << *stat_;
+		oss << stat_name_ << ": " << stat_;
 		text = oss.str();
 		Text::update();
+	}
+};
+
+
+class InputBox: public WindowItem{
+	std::string label;
+	static int DEFAULT_STAT;
+	int& refered_stat;
+	int lower_bound, upper_bound;
+public:
+	InputBox(std::string lbl = "input", int& ref = DEFAULT_STAT, int lb = 5, int ub = 100): label(lbl), refered_stat(ref), lower_bound(lb), upper_bound(ub){};
+
+	void update() override{
+		ImGui::InputInt(label.c_str(), &refered_stat);
+
+		if(refered_stat < lower_bound)
+			refered_stat = lower_bound;
+
+		if(refered_stat > upper_bound)
+			refered_stat = upper_bound;
 	}
 };
 
