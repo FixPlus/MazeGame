@@ -377,10 +377,14 @@ int main(int argc, char** argv){
 		drawer->updateStaticVertices();
 	}));
 
+	MazeUI::Window* hintWindow = new MazeUI::Window("Hint", 0.0f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	hintWindow->addNewItem(new MazeUI::Text("Press 'R' to fire"));
+
 
 	MazeUI::manager.addNewElement(testWindow);
 	MazeUI::manager.addNewElement(exitWindow);
 	MazeUI::manager.addNewElement(debugWindow);
+	MazeUI::manager.addNewElement(hintWindow);
 
 	drawer->updateOverlay();
 
