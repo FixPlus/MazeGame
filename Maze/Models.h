@@ -581,9 +581,6 @@ class FieldModel final: public StaticModel{
 
 	float cellSize = 10.0, wallHeight = 8.0;
 
-	void setup(){
-
-	};
 	void riseWall(int x, int y, float height){
 
 		std::vector<bool> sides = MazeGame::gameField.openSideFaces(x,y);
@@ -744,63 +741,13 @@ class FieldModel final: public StaticModel{
 
 	}
 
-
-public:
-	void setColor(int x, int y, glm::vec3 newColor){
-		std::vector<bool> sides = MazeGame::gameField.openSideFaces(x,y);
-		int count = 2;
-		for(auto side: sides)
-			if(side)
-				count += 2;
-
-		for(int i = 0; i < count; i++){
-			auto& tri = triangles[triIndices[y * MazeGame::gameField.getWidth() + x] + i];
-			tri.setColor(newColor);
-		}		
-	}
-
-	FieldModel& operator=(FieldModel&& another){
-		if(&another != this){
-			MazeGame::triManager.returnStaticTriangles(triangles);	
-			triangles = another.triangles;
-			another.triangles.clear();
-
-			triIndices = another.triIndices;
-			nodeShifts = another.nodeShifts;
-			nodeHeights = another.nodeHeights;
-		}
-		return *this;
-	}
-
-	float getCellSize() const{
-		return cellSize;
-	}
-
-	float getWallHeight() const{
-		return wallHeight;
-	}
-
-	float getZeroLevel() const {
-		return zeroLevel;
-	}
-
-	FieldModel() : Model(), StaticModel(polysRequested()){
-		std::cout << "Making Field model with " << size_ << " triangles" << std::endl;
+	void setup(){
 		int index = 0;
 
-		nodeHeights.resize((MazeGame::gameField.getHeight() + 1) * (MazeGame::gameField.getWidth() + 1));
-		nodeShifts.resize((MazeGame::gameField.getHeight() + 1) * (MazeGame::gameField.getWidth() + 1));
+		MazeGame::triManager.returnStaticTriangles(triangles);
+		MazeGame::triManager.applyForStaticTringles(polysRequested(), triangles);
+		triIndices.resize(0);
 
-		for(auto& h : nodeHeights){
-			h.first = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* wallHeight + wallHeight;
-			h.second = (static_cast<float>((rand() % 100)) *0.001)* wallHeight;
-		}
-
-		for(auto& shift: nodeShifts){
-			shift.first = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* cellSize;
-			shift.second = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* cellSize;
-
-		}
 		for(int y = 0; y < MazeGame::gameField.getHeight(); y++)
 			for(int x = 0; x < MazeGame::gameField.getWidth(); x++){
 				triIndices.push_back(index);
@@ -815,9 +762,9 @@ public:
 
 				auto& upper1 = triangles[index];
 
-				upper1.vertex(0).position = corner[0] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn1_elevat;
-				upper1.vertex(1).position = corner[1] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn2_elevat;
-				upper1.vertex(2).position = corner[2] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn3_elevat;
+				upper1.vertex(0).position = corner[0] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn1_elevat;
+				upper1.vertex(1).position = corner[1] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn2_elevat;
+				upper1.vertex(2).position = corner[2] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn3_elevat;
 				upper1.vertex(2).uv = {1.0f, 1.0f, 0.0f};
 				upper1.vertex(1).uv = {1.0f, 0.0f, 0.0f};
 				upper1.vertex(0).uv = {0.0f, 0.0f, 0.0f};
@@ -831,9 +778,9 @@ public:
 
 				auto& upper2 = triangles[index];
 
-				upper2.vertex(0).position = corner[2] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn3_elevat;
-				upper2.vertex(1).position = corner[3] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn4_elevat;
-				upper2.vertex(2).position = corner[0] + (MazeGame::gameField.getType(x, y) == CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn1_elevat;
+				upper2.vertex(0).position = corner[2] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn3_elevat;
+				upper2.vertex(1).position = corner[3] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn4_elevat;
+				upper2.vertex(2).position = corner[0] + (MazeGame::gameField.getType(x, y) == MazeGame::CellType::PATH ? 1.0f : 0.0f ) * VERTICAL_NORM * corn1_elevat;
 
 				upper2.vertex(0).normal = VERTICAL_NORM;
 				upper2.vertex(1).normal = VERTICAL_NORM;
@@ -961,7 +908,7 @@ public:
 				//setColor(x, y, {0.8f, 0.4f, 0.2f});
 				setColor(x, y, {0.9f, 0.7f, 0.7f});
 
-				if(MazeGame::gameField.getType(x, y) == CellType::WALL){
+				if(MazeGame::gameField.getType(x, y) == MazeGame::CellType::WALL){
 					// FIRE YELLOW setColor(x, y, {1.0f, 0.5f, 0.0f});
 					//setColor(x, y, {0.0f, 0.7f, 0.0f});
 					riseWall(x, y, wallHeight);
@@ -969,6 +916,71 @@ public:
 
 
 			}
+
+	};
+
+
+public:
+	void setColor(int x, int y, glm::vec3 newColor){
+		std::vector<bool> sides = MazeGame::gameField.openSideFaces(x,y);
+		int count = 2;
+		for(auto side: sides)
+			if(side)
+				count += 2;
+
+		for(int i = 0; i < count; i++){
+			auto& tri = triangles[triIndices[y * MazeGame::gameField.getWidth() + x] + i];
+			tri.setColor(newColor);
+		}		
+	}
+
+	void recreate(){
+		setup();
+	}
+
+	FieldModel& operator=(FieldModel&& another){
+		if(&another != this){
+			MazeGame::triManager.returnStaticTriangles(triangles);	
+			triangles = another.triangles;
+			another.triangles.clear();
+
+			triIndices = another.triIndices;
+			nodeShifts = another.nodeShifts;
+			nodeHeights = another.nodeHeights;
+		}
+		return *this;
+	}
+
+	float getCellSize() const{
+		return cellSize;
+	}
+
+	float getWallHeight() const{
+		return wallHeight;
+	}
+
+	float getZeroLevel() const {
+		return zeroLevel;
+	}
+
+	FieldModel() : Model(), StaticModel(polysRequested()){
+		std::cout << "Making Field model with " << size_ << " triangles" << std::endl;
+
+		nodeHeights.resize((MazeGame::gameField.getHeight() + 1) * (MazeGame::gameField.getWidth() + 1));
+		nodeShifts.resize((MazeGame::gameField.getHeight() + 1) * (MazeGame::gameField.getWidth() + 1));
+
+		for(auto& h : nodeHeights){
+			h.first = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* wallHeight + wallHeight;
+			h.second = (static_cast<float>((rand() % 100)) *0.001)* wallHeight;
+		}
+
+		for(auto& shift: nodeShifts){
+			shift.first = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* cellSize;
+			shift.second = (static_cast<float>((rand() % 100)) *0.001 - 0.05)* cellSize;
+
+		}
+
+		setup();
 	};
 };
 

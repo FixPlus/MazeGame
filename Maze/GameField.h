@@ -19,6 +19,9 @@
 */
 
 
+namespace MazeGame{
+
+
 enum class CellType {PATH, WALL, ERR, ANY};
 
 enum class Dirs {UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT};
@@ -111,6 +114,8 @@ public:
 };
 
 
+
+extern bool should_update_static_vertices;
 
 class CellField {
 	
@@ -226,6 +231,9 @@ public:
 		int index = y * width + x;
 
 		cells[index].type = type;
+
+		MazeGame::should_update_static_vertices = true;
+
 	};
 
 	void clear(CellType type = CellType::WALL){
@@ -495,11 +503,11 @@ public:
 	};
 };
 
-namespace MazeGame{
+
 
 extern CellField  gameField;
 
-};
+
 
 Cell* GameObject::getCell(){
 	return MazeGame::gameField.getCell(static_cast<int>(round(x)), static_cast<int>(round(y)));
@@ -633,4 +641,6 @@ public:
 		if(destination != nullptr && destination != parent)
 			destination->removeObject(this);
 	}
+};
+
 };

@@ -25,10 +25,9 @@
 namespace MazeGame{
 
 extern ::triGraphic::FieldModel* fieldModel;
+extern bool should_update_static_vertices; 
 
-
-};
-namespace triGraphic{
+using namespace triGraphic;
 
 class ModeledObject: public virtual GameObject, public virtual Model {
 protected:
@@ -102,6 +101,7 @@ public:
 	DirectedObject& operator=(DirectedObject&& rhs){
 		if(&rhs != this){
 			ModeledObject::operator=(rhs);
+			dir = rhs.dir;
 
 		}
 		return *this;
@@ -301,6 +301,7 @@ public:
 
 	void update(float dt) override{
 		if(parent->type == CellType::WALL){
+			//MazeGame::gameField.setType(parent->x, parent->y, CellType::PATH);
 			expired = true;
 		}
 		if(!isMoving())
@@ -320,7 +321,7 @@ public:
 				break;
 			}
 			case ObjectType::NPC: {
-				if(info.data == id || info.data == 2)
+				if(info.data == id)
 					return;
 /*			speed -= 0.2f;
 				if(speed < 0.2f)
@@ -331,6 +332,7 @@ public:
 			case ObjectType::POWERUP:{
 				return;
 			}
+			default: return;
 		}
 		expired = true;
 	}

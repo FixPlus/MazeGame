@@ -1,4 +1,4 @@
-
+CC = g++
 CFLAGS = -std=c++17 -I./external -I./external/glm -I./external/gli -I./base -O2
 LDFLAGS = -L./libs/vulkan -lvulkan -L./base -lxcb
 
@@ -26,20 +26,20 @@ TEST_DIRECTORY = ./tests4
 MAZE_EXEC = MazeGame
 
 $(MAZE_EXEC): $(MAZE_OBJECTS)
-	g++ $(CFLAGS) $(MAZE_OBJECTS)  -o $@ $(LDFLAGS) $(CFLAGS) $(DEFS)
+	$(CC) $(CFLAGS) $(MAZE_OBJECTS)  -o $@ $(LDFLAGS) $(CFLAGS) $(DEFS)
 
 include .depend
 
 all: $(MAZE_EXEC) compile_shaders
 
 test_gen: test_generator/test_generator.o
-	g++ $(CFLAGS) test_generator/test_generator.o -o $@ $(LDFLAGS) $(DEFINES) $(DEFS)
+	$(CC) $(CFLAGS) test_generator/test_generator.o -o $@ $(LDFLAGS) $(DEFINES) $(DEFS)
 
 test_analyzer: test_generator/test_analyzer.o
-	g++ $(CFLAGS) test_generator/test_analyzer.o -o $@ $(LDFLAGS) $(DEFINES) $(DEFS)
+	$(CC) $(CFLAGS) test_generator/test_analyzer.o -o $@ $(LDFLAGS) $(DEFINES) $(DEFS)
 
 .cpp.o:
-	g++  $(CFLAGS) -c -o $@ $< $(LDFLAGS) $(DEFINES) $(DEFS)
+	$(CC)  $(CFLAGS) -c -o $@ $< $(LDFLAGS) $(DEFINES) $(DEFS)
 
 compile_shaders:
 	./shaders/glslc ./shaders/triangle.vert -o ./shaders/triangle.vert.spv
