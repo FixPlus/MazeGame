@@ -745,6 +745,7 @@ class FieldModel final: public StaticModel{
 		int index = 0;
 
 		MazeGame::triManager.returnStaticTriangles(triangles);
+		triangles.clear();
 		MazeGame::triManager.applyForStaticTringles(polysRequested(), triangles);
 		triIndices.resize(0);
 
@@ -906,11 +907,12 @@ class FieldModel final: public StaticModel{
 
 
 				//setColor(x, y, {0.8f, 0.4f, 0.2f});
-				setColor(x, y, {0.9f, 0.7f, 0.7f});
+				//setColor(x, y, {0.9f, 0.7f, 0.7f});
 
+				setColor(x, y, {0.6f, 0.6f, 0.6f});
 				if(MazeGame::gameField.getType(x, y) == MazeGame::CellType::WALL){
 					// FIRE YELLOW setColor(x, y, {1.0f, 0.5f, 0.0f});
-					//setColor(x, y, {0.0f, 0.7f, 0.0f});
+					setColor(x, y, {1.0f, 1.0f, 1.0f});
 					riseWall(x, y, wallHeight);
 				}
 

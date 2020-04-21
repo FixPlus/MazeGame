@@ -225,7 +225,7 @@ public:
 	}
 
 	void setType(int x, int y, CellType type){
-		if(isOutOfbounds(x, y))
+		if(isOutOfbounds(x, y) || (x == 0 || x == width - 1) || (y == 0 || y == height - 1))
 			return;
 
 		int index = y * width + x;

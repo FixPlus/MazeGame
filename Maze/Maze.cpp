@@ -130,10 +130,28 @@ public:
 
 };
 
+class FpsCounter{
+	float timer = 0.0f;
+	int frame_count = 0;
+public:
+	float fps = 60.0f;
+
+	void addFrame(float dt){
+		frame_count++;
+		timer += dt;
+		if(timer >= 1.0f){
+			fps = static_cast<float>(frame_count) / timer;
+			timer = 0.0f;
+			frame_count = 0;
+		}
+	}
+
+};
+
 
 
 CameraKeeper camKeep;
-
+FpsCounter fpsCounter;
 
 
 // TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
@@ -340,6 +358,7 @@ int main(int argc, char** argv){
 	//TODO: make a special class managing intialization and re-initialization of UI 
 
 	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	testWindow->addNewItem(new MazeUI::StatText<float>(fpsCounter.fps, "fps"));
 	testWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::CoinObject::count, "Coins left"));
 	testWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::GameObject::count, "Objects"));
 	testWindow->addNewItem(new MazeUI::StatText<float>(player->x, "x"));
@@ -423,7 +442,10 @@ int main(int argc, char** argv){
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		
 		deltaTime = tDiff / 1000.0f; // time of current cycle turn in seconds
+		//std::cout << deltaTime << std::endl;
 
+		fpsCounter.addFrame(deltaTime);
+		//std::cout << "end frame" << std::endl;
 		overallTime += deltaTime;
 
 
