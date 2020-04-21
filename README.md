@@ -10,14 +10,14 @@ Use "make all" to compile all
 
 Use "make clean" to clean compiled binary files
 
-#About
+# About
 
 This project was created for educational purposes
 as study project in MIPT
 (2019 - 2020)
 
 
-#Platform
+# Platform
 
 Now it's only working on Linux platforms, but
 it's planned to make it run under Windows platform
