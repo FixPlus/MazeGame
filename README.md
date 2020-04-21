@@ -1,4 +1,5 @@
 # MazeGame
+
 C++ based project, simple 3D game. Vulkan API example code used to draw image.
 
 Use "make" to compile the programm
@@ -8,6 +9,20 @@ Use "make compile_shaders" to compile shaders
 Use "make all" to compile all
 
 Use "make clean" to clean compiled binary files
+
+#About
+
+This project was created for educational purposes
+as study project in MIPT
+(2019 - 2020)
+
+
+#Platform
+
+Now it's only working on Linux platforms, but
+it's planned to make it run under Windows platform
+
+
 
 # Primary TODO list for the project:
 
@@ -44,6 +59,8 @@ Use "make clean" to clean compiled binary files
 
 
 **EXTRA TODO LIST**
+
+	TODO: Windows OS platform support
 
 	TODO: Animation implementation
 
