@@ -3,7 +3,13 @@
 #include "Models.h"
 #include "Objects.h"
 #include "MazeUI.h"
+
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+
 #include <unistd.h>
+
+#endif
+
 #include <ctime>
 #include <list>
 #include <cstdlib>
@@ -155,6 +161,7 @@ FpsCounter fpsCounter;
 
 
 // TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 
 void gameHandleEvents(const xcb_generic_event_t *event){
 //	std::cout << "Event id:" << (event->response_type & 0x7f) <<  std::endl;
@@ -238,6 +245,19 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 
 }
 
+#elif defined(_WIN32)
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)						
+{																									
+	if (drawer != NULL)																		
+	{																								
+		drawer->handleMessages(hWnd, uMsg, wParam, lParam);									
+	}																								
+	return (DefWindowProc(hWnd, uMsg, wParam, lParam));												
+}	
+
+
+#endif
 
 
 void spawnCannon(){
@@ -251,9 +271,17 @@ void spawnCannon(){
 }
 
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 
+int main(int argc, char** argv)
 
-int main(int argc, char** argv){
+#elif defined(_WIN32)
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
+
+#endif
+
+{
 	srand(time(NULL));
 
 	float deltaTime = 0.0f;
@@ -267,6 +295,7 @@ int main(int argc, char** argv){
 
 
 	//TODO: move args reading and proccessing out of main() to some function/class
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 
 	for(int i = 0; i < argc; i++){
 		std::string arg = argv[i];
@@ -289,14 +318,27 @@ int main(int argc, char** argv){
 
 	}
 
+#elif defined(_WIN32)
+
+	for (int32_t i = 0; i < __argc; i++) { VulkanExample::args.push_back(__argv[i]); };  			
+
+#endif
+
 
 
 // INITIALIZATION PROCESS
 
 // STEP 1 : Starting a graphics core
 
-
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+	
 	drawer = new Drawer(style, gameHandleEvents, "MazeGame");
+
+#elif defined(_WIN32)
+
+	drawer = new Drawer(hInstance, WndProc, style, "MazeGame");
+
+#endif
 //	drawer->uboVS.lodBias = 6.0f;
 
 
@@ -415,8 +457,9 @@ int main(int argc, char** argv){
 		auto tStart = std::chrono::high_resolution_clock::now();
 
 		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
-
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		drawer->handleEvents(); // LISTENING TO USER INPUT
+#endif
 	//	player->moveInDirection();
 		camKeep.holdCamera();
 		if(MazeGame::should_update_static_vertices){
@@ -436,7 +479,11 @@ int main(int argc, char** argv){
 		if(timeToSleepMicroSecs < 0)
 			timeToSleepMicroSecs = 0;
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		usleep((unsigned int)timeToSleepMicroSecs);
+#elif defined(_WIN32)
+		//Sleep((unsigned int)(timeToSleepMicroSecs * 1000));
+#endif
 
 		tEnd = std::chrono::high_resolution_clock::now();
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
@@ -464,6 +511,5 @@ int main(int argc, char** argv){
 
 
 } // triangle manager and game field are destroyed here
-
 
 

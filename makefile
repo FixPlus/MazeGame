@@ -1,8 +1,14 @@
 CC = g++
 CFLAGS = -std=c++17 -I./external -I./external/glm -I./external/gli -I./base -O2
-LDFLAGS = -L./libs/vulkan -lvulkan -L./base -lxcb
+LDFLAGS_LINUX = -L./libs/vulkan -lvulkan -L./base -lxcb
+LDFLAGS_WINDOWS = -L./libs/vulkan/lib32 -L./base -lvulkan-1 -lgdi32
 
-DEFS = -D VK_USE_PLATFORM_XCB_KHR
+LDFLAGS = $(LDFLAGS_WINDOWS)
+
+DEFS_LINUX = -D VK_USE_PLATFORM_XCB_KHR
+DEFS_WINDOWS = -D _WIN32 -D VK_USE_PLATFORM_WIN32_KHR
+
+DEFS = $(DEFS_WINDOWS)
 
 BASE_SOURCES =   base/vulkanexamplebase.cpp base/VulkanTools.cpp base/VulkanDebug.cpp base/VulkanUIOverlay.cpp external/imgui/imgui.cpp external/imgui/imgui_draw.cpp external/imgui/imgui_widgets.cpp external/imgui/imgui_demo.cpp
 
@@ -26,7 +32,7 @@ TEST_DIRECTORY = ./tests4
 MAZE_EXEC = MazeGame
 
 $(MAZE_EXEC): $(MAZE_OBJECTS)
-	$(CC) $(CFLAGS) $(MAZE_OBJECTS)  -o $@ $(LDFLAGS) $(CFLAGS) $(DEFS)
+	$(CC) $(CFLAGS) $(MAZE_OBJECTS)  -o $@ $(LDFLAGS) $(DEFS)
 
 include .depend
 
@@ -46,6 +52,12 @@ compile_shaders:
 	./shaders/glslc ./shaders/triangle.frag -o ./shaders/triangle.frag.spv
 	./shaders/glslc ./shaders/uioverlay.frag -o ./shaders/uioverlay.frag.spv
 	./shaders/glslc ./shaders/uioverlay.vert -o ./shaders/uioverlay.vert.spv
+
+compile_shaders_windows:
+	./shaders/glslc.exe ./shaders/triangle.vert -o ./shaders/triangle.vert.spv
+	./shaders/glslc.exe ./shaders/triangle.frag -o ./shaders/triangle.frag.spv
+	./shaders/glslc.exe ./shaders/uioverlay.frag -o ./shaders/uioverlay.frag.spv
+	./shaders/glslc.exe ./shaders/uioverlay.vert -o ./shaders/uioverlay.vert.spv
 
 
 clean:

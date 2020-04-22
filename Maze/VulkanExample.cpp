@@ -247,7 +247,7 @@ for(int i = 0; i < NUMBER_OF_TEXTURES; i++){
 			// Clean up staging resources
 			vkFreeMemory(device, stagingMemory, nullptr);
 			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			std::cout << "Texture[" << i << "].deviceMemory = " << reinterpret_cast<long>(texture[i].deviceMemory) << std::endl;
+//			std::cout << "Texture[" << i << "].deviceMemory = " << reinterpret_cast<long>(texture[i].deviceMemory) << std::endl;
 		} else {
 			// Copy data to a linear tiled image
 

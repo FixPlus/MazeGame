@@ -279,10 +279,10 @@ void VulkanExampleBase::renderFrame()
 	{
 		lastFPS = static_cast<uint32_t>((float)frameCounter * (1000.0f / fpsTimer));
 #if defined(_WIN32)
-		/*if (!settings.overlay)	{
+		if (!settings.overlay)	{
 			std::string windowTitle = getWindowTitle();
 			SetWindowText(window, windowTitle.c_str());
-		}*/
+		}
 #endif
 		frameCounter = 0;
 		lastTimestamp = tEnd;
@@ -295,12 +295,30 @@ void VulkanExampleBase::preRenderLoop(){
 	destWidth = width;
 	destHeight = height;
 	lastTimestamp = std::chrono::high_resolution_clock::now();	
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 	xcb_flush(connection);
+#endif
+
 }
 
 void VulkanExampleBase::renderLoop()
 {
 
+#if defined(_WIN32)
+	MSG msg;
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		if (msg.message == WM_QUIT) {
+			quit = true;
+			break;
+		}
+	}
+	if (prepared && !IsIconic(window)) {
+		renderFrame();
+	}
+
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
 
 		auto tStart = std::chrono::high_resolution_clock::now();
 		if (viewUpdated)
@@ -345,6 +363,8 @@ void VulkanExampleBase::renderLoop()
 			frameCounter = 0;
 			lastTimestamp = tEnd;
 		}
+
+#endif
 		updateOverlay();
 	// Flush device to make sure all resources can be freed
 }

@@ -2,7 +2,21 @@
 
 namespace triGraphic{
 
-Drawer::Drawer(enum WindowStyle style, CHEFR che, std::string windowName, uint32_t width, uint32_t height, int32_t init_camera_rot_x, int32_t init_camera_rot_y): VulkanExample(windowName), customHandleEvent(che){
+	Drawer::Drawer( 
+#if defined(_WIN32)
+		HINSTANCE hInstance, LRESULT CALLBACK (*WndProc)(HWND, UINT, WPARAM, LPARAM),
+#endif
+		enum WindowStyle style, 
+#if defined(VK_USE_PLATFORM_XCB_KHR)		
+		CHEFR che, 
+#endif
+		std::string windowName, uint32_t width, uint32_t height, int32_t init_camera_rot_x, int32_t init_camera_rot_y):
+ VulkanExample(windowName)
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+ , customHandleEvent(che)
+#endif
+
+ {
 
 	if(style == WS_FULLSCREEN)
 		settings.fullscreen = true;
@@ -15,9 +29,15 @@ Drawer::Drawer(enum WindowStyle style, CHEFR che, std::string windowName, uint32
 	rotation.y = init_camera_rot_y;
 
 	initVulkan();
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 	setupWindow();
+#elif defined(_WIN32)																	
+	setupWindow(hInstance, WndProc);													
+#endif
+
 }
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 
 void Drawer::handleEvents(){
 	xcb_generic_event_t *event;
@@ -30,6 +50,8 @@ void Drawer::handleEvents(){
 
 
 }
+
+
 void Drawer::localHandleEvent(const xcb_generic_event_t *event) //handles the xcb window events
 {
 		handleEvent(event); //handling events by the APIManager
@@ -64,5 +86,7 @@ void Drawer::localHandleEvent(const xcb_generic_event_t *event) //handles the xc
 	}	
 
 }
+
+#endif
 
 };

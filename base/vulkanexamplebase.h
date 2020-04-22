@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <fcntl.h>
 #include <io.h>
-#include <ShellScalingAPI.h>
+#include "ShellScalingAPI.h"
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 #include <android/native_activity.h>
 #include <android/asset_manager.h>
@@ -207,6 +207,7 @@ public:
 #if defined(_WIN32)
 	HWND window;
 	HINSTANCE windowInstance;
+	bool quit = false;
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// true if application has focused, false if moved to background
 	bool focused = false;
