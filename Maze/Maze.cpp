@@ -3,7 +3,13 @@
 #include "Models.h"
 #include "Objects.h"
 #include "MazeUI.h"
+
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+
 #include <unistd.h>
+
+#endif
+
 #include <ctime>
 #include <list>
 #include <cstdlib>
@@ -126,6 +132,7 @@ public:
 		disposal = glm::vec3(rotateMat * glm::vec4(disposal, 0.0f));
 
 		drawer->rotateCamera(axis.x * angle, axis.y * angle, axis.z * angle);
+		holdCamera();
 	}
 
 };
@@ -156,13 +163,12 @@ FpsCounter fpsCounter;
 
 // TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
 
-void gameHandleEvents(const xcb_generic_event_t *event){
+void gameHandleEvents(UserInputMessage message){
 //	std::cout << "Event id:" << (event->response_type & 0x7f) <<  std::endl;
-	switch(event->response_type & 0x7f){
-		case XCB_KEY_PRESS: //Keyboard input
+	switch (message.type){
+		case UserInputMessage::Type::UIM_KEYDOWN: //Keyboard input
 		{
-			const xcb_key_release_event_t *keyEvent = reinterpret_cast<const xcb_key_release_event_t*>(event);
-		switch (keyEvent->detail)
+		switch (message.detail)
 			{
 				case KEY_W:{
 					player->moveInDirection();
@@ -185,32 +191,21 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 				case KEY_F1:
 					break;				
 			}
+			break;
 		}
-		case XCB_KEY_RELEASE:{
+		case UserInputMessage::Type::UIM_KEYUP:{
 //			std::cout << "Released" << std::endl;
+			break;
 		}
-		case XCB_BUTTON_PRESS:
+		case UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE:{
+			//std::cout << static_cast<int>(message.s_detail) << std::endl;
+			float dir = message.s_detail > 0 ? 1.0f : -1.0f;
+			camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f * dir);
+			break;			
+		}
+		case UserInputMessage::Type::UIM_MOUSE_BTN_DOWN:
 		{
-			xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
-//			std::cout << "Button press details: " << static_cast<int>(press->detail) <<std::endl;
 
-			switch(press->detail){
-				case 4:{
-					//camKeep.scaleDisposal(1.1f);
-					camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
-	//				std::cout << "Mouse wheel: " << press->event_x << std::endl;
-					break;
-				}
-				case 5:{
-					//camKeep.scaleDisposal(0.9f);
-					camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), -10.0f);
-	//				std::cout << "Mouse wheel: " << press->event_x << std::endl;
-					break;
-				}
-				default:{
-
-				}
-			}
 /*			if (press->detail == XCB_BUTTON_INDEX_1)
 				mouseButtons.left = true;
 			if (press->detail == XCB_BUTTON_INDEX_2)
@@ -220,9 +215,8 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 */
 		}
 		break;
-		case XCB_BUTTON_RELEASE:
+		case UserInputMessage::Type:: UIM_MOUSE_BTN_UP:
 		{
-			xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
 //			std::cout << "Button release details: " << static_cast<int>(press->detail) <<std::endl;
 /*			if (press->detail == XCB_BUTTON_INDEX_1)
 				mouseButtons.left = false;
@@ -234,10 +228,25 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 		}
 
 		break;
+		default:
+		break;
 	}	
 
 }
 
+#if defined(_WIN32)
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)						
+{																									
+	if (drawer != NULL)																		
+	{																								
+		drawer->handleMessages(hWnd, uMsg, wParam, lParam);									
+	}																								
+	return (DefWindowProc(hWnd, uMsg, wParam, lParam));												
+}	
+
+
+#endif
 
 
 void spawnCannon(){
@@ -251,9 +260,17 @@ void spawnCannon(){
 }
 
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 
+int main(int argc, char** argv)
 
-int main(int argc, char** argv){
+#elif defined(_WIN32)
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
+
+#endif
+
+{
 	srand(time(NULL));
 
 	float deltaTime = 0.0f;
@@ -261,33 +278,49 @@ int main(int argc, char** argv){
 
 
 	int fieldSize = 50;
-	enum WindowStyle style = WS_FULLSCREEN;
+	enum WindowStyle style = WS_WINDOWED;
 
 	int number_of_creatures = 5;
+	int my_argc;
+	char** my_argv;
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+	
+	my_argc = argc;
+	my_argv = argv;
 
+#elif defined(_WIN32)
+	my_argc = __argc;
+	my_argv = __argv;
+#endif
 	//TODO: move args reading and proccessing out of main() to some function/class
 
-	for(int i = 0; i < argc; i++){
-		std::string arg = argv[i];
-//		if(arg == FULLSCREEN_MSG)
-//			style = WS_FULLSCREEN;
+	for(int i = 0; i < my_argc; i++){
+		std::string arg = my_argv[i];
+		if(arg == FULLSCREEN_MSG)
+			style = WS_FULLSCREEN;
 		if(arg == FIELD_SIZE_MSG){
-			if(i + 1 == argc){
+			if(i + 1 == my_argc){
 				std::cout << "You should input NUMBER after '"<<  arg <<"' token!" << std::endl;
 				return 0;
 			}
-			fieldSize = atoi(argv[i + 1]);
+			fieldSize = atoi(my_argv[i + 1]);
 		}
 		if(arg == DEBUG_UNIFORM_MSG_1){
-			if(i + 1 == argc){
+			if(i + 1 == my_argc){
 				std::cout << "You should input NUMBER after '"<<  arg <<"' token!" << std::endl;
 				continue;
 			}
-			number_of_creatures = atoi(argv[i + 1]);
+			number_of_creatures = atoi(my_argv[i + 1]);
 		}
 
 	}
+
+#if defined(_WIN32)
+
+	for (int32_t i = 0; i < __argc; i++) { VulkanExample::args.push_back(__argv[i]); };  			
+
+#endif
 
 
 
@@ -295,8 +328,15 @@ int main(int argc, char** argv){
 
 // STEP 1 : Starting a graphics core
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+	
+	drawer = new Drawer(style, nullptr, gameHandleEvents, "MazeGame");
 
-	drawer = new Drawer(style, gameHandleEvents, "MazeGame");
+#elif defined(_WIN32)
+
+	drawer = new Drawer(hInstance, WndProc, style, gameHandleEvents, "MazeGame");
+
+#endif
 //	drawer->uboVS.lodBias = 6.0f;
 
 
@@ -412,11 +452,13 @@ int main(int argc, char** argv){
 
 	while(!drawer->shouldQuit() && MazeGame::CoinObject::count > 0 && !force_quit){
 
+	
 		auto tStart = std::chrono::high_resolution_clock::now();
 
 		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
-
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		drawer->handleEvents(); // LISTENING TO USER INPUT
+#endif
 	//	player->moveInDirection();
 		camKeep.holdCamera();
 		if(MazeGame::should_update_static_vertices){
@@ -436,7 +478,9 @@ int main(int argc, char** argv){
 		if(timeToSleepMicroSecs < 0)
 			timeToSleepMicroSecs = 0;
 
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		usleep((unsigned int)timeToSleepMicroSecs);
+#endif
 
 		tEnd = std::chrono::high_resolution_clock::now();
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
@@ -462,8 +506,8 @@ int main(int argc, char** argv){
 
 	delete drawer;
 
+	return 0; 
 
 } // triangle manager and game field are destroyed here
-
 
 
