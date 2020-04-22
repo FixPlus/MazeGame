@@ -10,14 +10,14 @@ namespace triGraphic{
 #if defined(VK_USE_PLATFORM_XCB_KHR)		
 		CHEFR che, 
 #endif
-		std::string windowName, uint32_t width, uint32_t height, int32_t init_camera_rot_x, int32_t init_camera_rot_y):
+		UIFunc func, std::string windowName, uint32_t width, uint32_t height, int32_t init_camera_rot_x, int32_t init_camera_rot_y):
  VulkanExample(windowName)
 #if defined(VK_USE_PLATFORM_XCB_KHR)
  , customHandleEvent(che)
 #endif
 
  {
-
+ 	user_input = func;
 	if(style == WS_FULLSCREEN)
 		settings.fullscreen = true;
 	else{

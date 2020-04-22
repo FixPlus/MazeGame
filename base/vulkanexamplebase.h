@@ -53,6 +53,13 @@
 #include "VulkanSwapChain.hpp"
 #include "camera.hpp"
 #include "benchmark.hpp"
+struct UserInputMessage{
+	enum Type {UIM_KEYDOWN, UIM_KEYUP, UIM_MOUSE_BTN_DOWN, UIM_MOUSE_BTN_UP, UIM_MOUSEWHEEL_MOVE, UIM_DEFAULT} type;
+	unsigned char detail;
+	char s_detail;
+};
+
+using UIFunc = void (*)(UserInputMessage);
 
 class VulkanExampleBase
 {
@@ -124,6 +131,8 @@ protected:
 		VkSemaphore renderComplete;
 	} semaphores;
 	std::vector<VkFence> waitFences;
+
+	UIFunc user_input;
 public: 
 	bool prepared = false;
 	uint32_t width = 1280;

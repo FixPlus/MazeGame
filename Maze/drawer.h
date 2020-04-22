@@ -27,7 +27,7 @@ public:
 #if defined(VK_USE_PLATFORM_XCB_KHR)		
 		CHEFR che = nullptr, 
 #endif
-		std::string windowName = "Window", uint32_t width = 1240, uint32_t height = 780, int32_t init_camera_rot_x = 90, int32_t init_camera_rot_y = -540);
+		UIFunc func = nullptr, std::string windowName = "Window", uint32_t width = 1240, uint32_t height = 780, int32_t init_camera_rot_x = 90, int32_t init_camera_rot_y = -540);
 
 	Drawer(Drawer const &rhs) = delete;
 

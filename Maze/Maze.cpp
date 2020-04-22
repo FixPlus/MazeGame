@@ -132,6 +132,7 @@ public:
 		disposal = glm::vec3(rotateMat * glm::vec4(disposal, 0.0f));
 
 		drawer->rotateCamera(axis.x * angle, axis.y * angle, axis.z * angle);
+		holdCamera();
 	}
 
 };
@@ -161,15 +162,14 @@ FpsCounter fpsCounter;
 
 
 // TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
-#if defined(VK_USE_PLATFORM_XCB_KHR)
 
-void gameHandleEvents(const xcb_generic_event_t *event){
+void gameHandleEvents(UserInputMessage message){
 //	std::cout << "Event id:" << (event->response_type & 0x7f) <<  std::endl;
-	switch(event->response_type & 0x7f){
-		case XCB_KEY_PRESS: //Keyboard input
+	switch (message.type){
+		case UserInputMessage::Type::UIM_KEYDOWN: //Keyboard input
 		{
-			const xcb_key_release_event_t *keyEvent = reinterpret_cast<const xcb_key_release_event_t*>(event);
-		switch (keyEvent->detail)
+
+		switch (message.detail)
 			{
 				case KEY_W:{
 					player->moveInDirection();
@@ -184,40 +184,29 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 				case KEY_D:
 					player->changeDirection(player->getDir() + 1);
 					break;
-				case KEY_R:
-					MazeGame::gameField.addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
-					break;
+//				case KEY_R:
+//					break;
 				case KEY_P:
+					MazeGame::gameField.addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
 					break;
 				case KEY_F1:
 					break;				
 			}
+			break;
 		}
-		case XCB_KEY_RELEASE:{
+		case UserInputMessage::Type::UIM_KEYUP:{
 //			std::cout << "Released" << std::endl;
+			break;
 		}
-		case XCB_BUTTON_PRESS:
+		case UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE:{
+			//std::cout << static_cast<int>(message.s_detail) << std::endl;
+			float dir = message.s_detail > 0 ? 1.0f : -1.0f;
+			camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f * dir);
+			break;			
+		}
+		case UserInputMessage::Type::UIM_MOUSE_BTN_DOWN:
 		{
-			xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
-//			std::cout << "Button press details: " << static_cast<int>(press->detail) <<std::endl;
 
-			switch(press->detail){
-				case 4:{
-					//camKeep.scaleDisposal(1.1f);
-					camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
-	//				std::cout << "Mouse wheel: " << press->event_x << std::endl;
-					break;
-				}
-				case 5:{
-					//camKeep.scaleDisposal(0.9f);
-					camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), -10.0f);
-	//				std::cout << "Mouse wheel: " << press->event_x << std::endl;
-					break;
-				}
-				default:{
-
-				}
-			}
 /*			if (press->detail == XCB_BUTTON_INDEX_1)
 				mouseButtons.left = true;
 			if (press->detail == XCB_BUTTON_INDEX_2)
@@ -227,9 +216,8 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 */
 		}
 		break;
-		case XCB_BUTTON_RELEASE:
+		case UserInputMessage::Type:: UIM_MOUSE_BTN_UP:
 		{
-			xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
 //			std::cout << "Button release details: " << static_cast<int>(press->detail) <<std::endl;
 /*			if (press->detail == XCB_BUTTON_INDEX_1)
 				mouseButtons.left = false;
@@ -241,11 +229,13 @@ void gameHandleEvents(const xcb_generic_event_t *event){
 		}
 
 		break;
+		default:
+		break;
 	}	
 
 }
 
-#elif defined(_WIN32)
+#if defined(_WIN32)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)						
 {																									
@@ -289,7 +279,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 
 	int fieldSize = 50;
-	enum WindowStyle style = WS_FULLSCREEN;
+	enum WindowStyle style = WS_WINDOWED;
 
 	int number_of_creatures = 5;
 
@@ -336,7 +326,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 #elif defined(_WIN32)
 
-	drawer = new Drawer(hInstance, WndProc, style, "MazeGame");
+	drawer = new Drawer(hInstance, WndProc, style, gameHandleEvents, "MazeGame");
 
 #endif
 //	drawer->uboVS.lodBias = 6.0f;
@@ -454,6 +444,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	while(!drawer->shouldQuit() && MazeGame::CoinObject::count > 0 && !force_quit){
 
+	
 		auto tStart = std::chrono::high_resolution_clock::now();
 
 		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
@@ -509,6 +500,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	delete drawer;
 
+	return 0; 
 
 } // triangle manager and game field are destroyed here
 

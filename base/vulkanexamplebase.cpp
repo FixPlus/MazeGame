@@ -976,10 +976,12 @@ HWND VulkanExampleBase::setupWindow(HINSTANCE hinstance, WNDPROC wndproc)
 
 void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	UserInputMessage custom_message{UserInputMessage::Type::UIM_DEFAULT, 0, 0};
 	switch (uMsg)
 	{
 	case WM_CLOSE:
 		prepared = false;
+		quit = true;
 		DestroyWindow(hWnd);
 		PostQuitMessage(0);
 		break;
@@ -987,6 +989,8 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		ValidateRect(window, NULL);
 		break;
 	case WM_KEYDOWN:
+		custom_message.type = UserInputMessage::Type::UIM_KEYDOWN;
+		custom_message.detail = wParam;
 		switch (wParam)
 		{
 		case KEY_P:
@@ -1024,6 +1028,8 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		keyPressed((uint32_t)wParam);
 		break;
 	case WM_KEYUP:
+		custom_message.type = UserInputMessage::Type::UIM_KEYUP;
+		custom_message.detail = wParam;
 		if (camera.firstperson)
 		{
 			switch (wParam)
@@ -1044,31 +1050,45 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		}
 		break;
 	case WM_LBUTTONDOWN:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
+		custom_message.detail = 0;
 		mousePos = glm::vec2((float)LOWORD(lParam), (float)HIWORD(lParam));
 		mouseButtons.left = true;
 		break;
 	case WM_RBUTTONDOWN:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
+		custom_message.detail = 1;
 		mousePos = glm::vec2((float)LOWORD(lParam), (float)HIWORD(lParam));
 		mouseButtons.right = true;
 		break;
 	case WM_MBUTTONDOWN:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
+		custom_message.detail = 2;
 		mousePos = glm::vec2((float)LOWORD(lParam), (float)HIWORD(lParam));
 		mouseButtons.middle = true;
 		break;
 	case WM_LBUTTONUP:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_UP;
+		custom_message.detail = 0;
 		mouseButtons.left = false;
 		break;
 	case WM_RBUTTONUP:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_UP;
+		custom_message.detail = 1;
 		mouseButtons.right = false;
 		break;
 	case WM_MBUTTONUP:
+		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_UP;
+		custom_message.detail = 2;
 		mouseButtons.middle = false;
 		break;
 	case WM_MOUSEWHEEL:
 	{
 		short wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
-		zoom += (float)wheelDelta * 0.005f * zoomSpeed;
-		camera.translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * zoomSpeed));
+		custom_message.type = UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE;
+		custom_message.s_detail = wheelDelta;
+		//zoom += (float)wheelDelta * 0.005f * zoomSpeed;
+		//camera.translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f * zoomSpeed));
 		viewUpdated = true;
 		break;
 	}
@@ -1095,6 +1115,8 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		resizing = false;
 		break;
 	}
+
+	user_input(custom_message);
 }
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 int32_t VulkanExampleBase::handleAppInput(struct android_app* app, AInputEvent* event)
@@ -2073,20 +2095,20 @@ void VulkanExampleBase::handleMouseMove(int32_t x, int32_t y)
 	}
 
 	if (mouseButtons.left) {
-		rotation.x += dy * 1.25f * rotationSpeed;
-		rotation.y -= dx * 1.25f * rotationSpeed;
-		camera.rotate(glm::vec3(dy * camera.rotationSpeed, -dx * camera.rotationSpeed, 0.0f));
+		//rotation.x += dy * 1.25f * rotationSpeed;
+		//rotation.y -= dx * 1.25f * rotationSpeed;
+		//camera.rotate(glm::vec3(dy * camera.rotationSpeed, -dx * camera.rotationSpeed, 0.0f));
 		viewUpdated = true;
 	}
 	if (mouseButtons.right) {
-		zoom += dy * .005f * zoomSpeed;
-		camera.translate(glm::vec3(-0.0f, 0.0f, dy * .005f * zoomSpeed));
+		//zoom += dy * .005f * zoomSpeed;
+		//camera.translate(glm::vec3(-0.0f, 0.0f, dy * .005f * zoomSpeed));
 		viewUpdated = true;
 	}
 	if (mouseButtons.middle) {
-		cameraPos.x -= dx * 0.01f;
-		cameraPos.y -= dy * 0.01f;
-		camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
+		//cameraPos.x -= dx * 0.01f;
+		//cameraPos.y -= dy * 0.01f;
+		//camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
 		viewUpdated = true;
 	}
 	mousePos = glm::vec2((float)x, (float)y);
