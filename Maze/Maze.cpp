@@ -184,10 +184,10 @@ void gameHandleEvents(UserInputMessage message){
 				case KEY_D:
 					player->changeDirection(player->getDir() + 1);
 					break;
-//				case KEY_R:
-//					break;
-				case KEY_P:
+				case KEY_R:
 					MazeGame::gameField.addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
+					break;
+				case KEY_P:
 					break;
 				case KEY_F1:
 					break;				
@@ -282,33 +282,42 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	enum WindowStyle style = WS_WINDOWED;
 
 	int number_of_creatures = 5;
+	int my_argc;
+	char** my_argv;
 
-
-	//TODO: move args reading and proccessing out of main() to some function/class
 #if defined(VK_USE_PLATFORM_XCB_KHR)
+	
+	my_argc = argc;
+	my_argv = argv;
 
-	for(int i = 0; i < argc; i++){
-		std::string arg = argv[i];
-//		if(arg == FULLSCREEN_MSG)
-//			style = WS_FULLSCREEN;
+#elif defined(_WIN32)
+	my_argc = __argc;
+	my_argv = __argv;
+#endif
+	//TODO: move args reading and proccessing out of main() to some function/class
+
+	for(int i = 0; i < my_argc; i++){
+		std::string arg = my_argv[i];
+		if(arg == FULLSCREEN_MSG)
+			style = WS_FULLSCREEN;
 		if(arg == FIELD_SIZE_MSG){
-			if(i + 1 == argc){
+			if(i + 1 == my_argc){
 				std::cout << "You should input NUMBER after '"<<  arg <<"' token!" << std::endl;
 				return 0;
 			}
-			fieldSize = atoi(argv[i + 1]);
+			fieldSize = atoi(my_argv[i + 1]);
 		}
 		if(arg == DEBUG_UNIFORM_MSG_1){
-			if(i + 1 == argc){
+			if(i + 1 == my_argc){
 				std::cout << "You should input NUMBER after '"<<  arg <<"' token!" << std::endl;
 				continue;
 			}
-			number_of_creatures = atoi(argv[i + 1]);
+			number_of_creatures = atoi(my_argv[i + 1]);
 		}
 
 	}
 
-#elif defined(_WIN32)
+#if defined(_WIN32)
 
 	for (int32_t i = 0; i < __argc; i++) { VulkanExample::args.push_back(__argv[i]); };  			
 
@@ -472,8 +481,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		usleep((unsigned int)timeToSleepMicroSecs);
-#elif defined(_WIN32)
-		//Sleep((unsigned int)(timeToSleepMicroSecs * 1000));
 #endif
 
 		tEnd = std::chrono::high_resolution_clock::now();
