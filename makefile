@@ -4,3 +4,7 @@ windows:
 
 linux:
 	make -f makeLinux all
+
+
+clean:
+	make -f makeWindows clean

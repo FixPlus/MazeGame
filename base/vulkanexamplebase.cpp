@@ -1733,6 +1733,7 @@ void VulkanExampleBase::initxcbConnection()
 
 void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 {
+	UserInputMessage message{UserInputMessage::Type::UIM_DEFAULT, 0, 0};
 	switch (event->response_type & 0x7f)
 	{
 	case XCB_CLIENT_MESSAGE:
@@ -1750,29 +1751,57 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 	break;
 	case XCB_BUTTON_PRESS:
 	{
+		message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
+
 		xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
-		if (press->detail == XCB_BUTTON_INDEX_1)
+		if (press->detail == XCB_BUTTON_INDEX_1){
+			message.detail = 0;
 			mouseButtons.left = true;
-		if (press->detail == XCB_BUTTON_INDEX_2)
+		}
+		if (press->detail == XCB_BUTTON_INDEX_2){
+			message.detail = 1;
 			mouseButtons.middle = true;
-		if (press->detail == XCB_BUTTON_INDEX_3)
+		}
+		if (press->detail == XCB_BUTTON_INDEX_3){
+			message.detail = 2;
 			mouseButtons.right = true;
+		}
+		if(press->detail == 4){
+			message.type = UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE;
+			message.s_detail = 1;
+		}
+		if(press->detail == 5){
+			message.type = UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE;
+			message.s_detail = -1;
+		}
 	}
 	break;
 	case XCB_BUTTON_RELEASE:
 	{
+		message.type = UserInputMessage::Type::UIM_MOUSE_BTN_UP;
 		xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
-		if (press->detail == XCB_BUTTON_INDEX_1)
+		if (press->detail == XCB_BUTTON_INDEX_1){
+			message.detail = 0;
 			mouseButtons.left = false;
-		if (press->detail == XCB_BUTTON_INDEX_2)
+		}
+		if (press->detail == XCB_BUTTON_INDEX_2){
+			message.detail = 1;
 			mouseButtons.middle = false;
-		if (press->detail == XCB_BUTTON_INDEX_3)
+		}
+		if (press->detail == XCB_BUTTON_INDEX_3){
+			message.detail = 2;
 			mouseButtons.right = false;
+		}
 	}
 	break;
 	case XCB_KEY_PRESS:
 	{
+		message.type = UserInputMessage::Type::UIM_KEYDOWN;
+
 		const xcb_key_release_event_t *keyEvent = (const xcb_key_release_event_t *)event;
+		
+		message.detail = keyEvent->detail;
+
 		switch (keyEvent->detail)
 		{
 			case KEY_W:
@@ -1800,7 +1829,12 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 	break;	
 	case XCB_KEY_RELEASE:
 	{
+		message.type = UserInputMessage::Type::UIM_KEYUP;
+
 		const xcb_key_release_event_t *keyEvent = (const xcb_key_release_event_t *)event;
+
+		message.detail = keyEvent->detail;
+
 		switch (keyEvent->detail)
 		{
 			case KEY_W:
@@ -1842,6 +1876,8 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 	default:
 		break;
 	}
+
+	user_input(message);
 }
 #endif
 

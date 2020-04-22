@@ -168,7 +168,6 @@ void gameHandleEvents(UserInputMessage message){
 	switch (message.type){
 		case UserInputMessage::Type::UIM_KEYDOWN: //Keyboard input
 		{
-
 		switch (message.detail)
 			{
 				case KEY_W:{
@@ -331,7 +330,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 	
-	drawer = new Drawer(style, gameHandleEvents, "MazeGame");
+	drawer = new Drawer(style, nullptr, gameHandleEvents, "MazeGame");
 
 #elif defined(_WIN32)
 

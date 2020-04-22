@@ -54,7 +54,6 @@ void Drawer::handleEvents(){
 
 void Drawer::localHandleEvent(const xcb_generic_event_t *event) //handles the xcb window events
 {
-		handleEvent(event); //handling events by the APIManager
 	
 
 	if(customHandleEvent != nullptr)
