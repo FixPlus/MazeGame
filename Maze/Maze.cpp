@@ -277,10 +277,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	float overallTime = 0.0f;
 
 
-	int fieldSize = 50;
+	int fieldSize = 75;
 	enum WindowStyle style = WS_WINDOWED;
 
-	int number_of_creatures = 5;
+	int number_of_creatures = 250;
 	int my_argc;
 	char** my_argv;
 
