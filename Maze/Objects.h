@@ -301,8 +301,8 @@ public:
 
 	void update(float dt) override{
 		if(parent->type == CellType::WALL){
-			//if(id == 0)
-				//MazeGame::gameField.setType(parent->x, parent->y, CellType::PATH);
+		//	if(id == 0)
+		//		MazeGame::gameField.setType(parent->x, parent->y, CellType::PATH);
 			expired = true;
 		}
 		if(!isMoving())

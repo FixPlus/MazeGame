@@ -8,3 +8,6 @@ linux:
 
 clean:
 	make -f makeWindows clean
+
+release: windows
+	make -f makeWindows release

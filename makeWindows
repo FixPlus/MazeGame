@@ -40,4 +40,12 @@ compile_shaders:
 	./shaders/glslc.exe ./shaders/uioverlay.vert -o ./shaders/uioverlay.vert.spv
 
 clean:
-	rm -f $(OBJECTS_TO_CLEAN) *.o $(COMP_SHADERS) $(MAZE_EXEC)
+	rm -f $(OBJECTS_TO_CLEAN) *.o $(COMP_SHADERS) $(MAZE_EXEC) 
+	rm -f -r release
+release: all
+	rm -f -r release
+	mkdir release
+	cp -r -t release $(MAZE_EXEC) ./data
+	rm release/data/PVRTexToolCLI
+	mkdir release/shaders
+	cp -t release/shaders $(COMP_SHADERS)
