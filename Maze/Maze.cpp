@@ -1,5 +1,5 @@
 #include "drawer.h"
-#include "GameField.h"
+#include "GameCore.h"
 #include "Models.h"
 #include "Objects.h"
 #include "MazeUI.h"
@@ -85,8 +85,9 @@ MazeGame::PlayerObject<SimpleArrow>* player; // TODO: Move player object in MECH
 
 
 DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
-MazeGame::CellField MazeGame::gameField;    // Global game field - core object of the game, used by all in game objects
-FieldModel* MazeGame::fieldModel; // Global field model, that used to draw a game field and other enviropment
+//MazeGame::CellField MazeGame::gameField;    // Global game field - core object of the game, used by all in game objects
+//FieldModel* MazeGame::fieldModel; // Global field model, that used to draw a game field and other enviropment
+MazeGame::GameCore* MazeGame::gameCore;
 MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
 bool MazeGame::should_update_static_vertices = false; 
 
@@ -183,7 +184,7 @@ void gameHandleEvents(UserInputMessage message){
 					player->changeDirection(player->getDir() + 1);
 					break;
 				case KEY_R:
-					MazeGame::gameField.addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
+					MazeGame::gameCore->addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
 					break;
 				case KEY_P:
 					break;
@@ -236,10 +237,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void spawnCannon(){
 	MazeGame::Cell cell;
 	do{
-		cell = *MazeGame::gameField.getRandomCell(MazeGame::CellType::PATH);
-	}while(MazeGame::gameField.isThereObjectsInCell(cell.x, cell.y));
+		cell = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
+	}while(MazeGame::gameCore->isThereObjectsInCell(cell.x, cell.y));
 
-	MazeGame::gameField.addNewGameObject(new MazeGame::Cannon<SimpleArrow>{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
+	MazeGame::gameCore->addNewGameObject(new MazeGame::Cannon<SimpleArrow>{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
 
 }
 
@@ -329,8 +330,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	// TODO: rearrange the gameField creation and recreation inside game mechanics class(aka MECH_MANAGER) and make it free out of triangle manager   
 
-	MazeGame::gameField = MazeGame::CellField{fieldSize, fieldSize};
-	MazeGame::gameField.generateRandomMaze();
 
 // STEP 3 : Initializing triangle manager
 
@@ -343,30 +342,33 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	//TODO: organize GameObjects creation in some manager class (aka MECH_MANAGER), move there all game mechanics realization
 
-	MazeGame::fieldModel = new FieldModel{};
-
+	MazeGame::gameCore = new MazeGame::GameCore{fieldSize, fieldSize};
+	MazeGame::gameCore->generateRandomMaze();
+	MazeGame::gameCore->recreate();
 	
 
 
-	MazeGame::Cell init = *MazeGame::gameField.getRandomCell(MazeGame::CellType::PATH);
+	MazeGame::Cell init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
 
 
-	player = dynamic_cast<MazeGame::PlayerObject<SimpleArrow>*>(MazeGame::gameField.addNewGameObject(new MazeGame::PlayerObject<SimpleArrow>{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
+	player = dynamic_cast<MazeGame::PlayerObject<SimpleArrow>*>(MazeGame::gameCore->addNewGameObject(new MazeGame::PlayerObject<SimpleArrow>{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
 
 	for(int i = 0; i < number_of_creatures; i++){
 		do{
-			init = *MazeGame::gameField.getRandomCell(MazeGame::CellType::PATH);
-		}while(MazeGame::gameField.isThereObjectsInCell(init.x, init.y));
+			init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
+		}while(MazeGame::gameCore->isThereObjectsInCell(init.x, init.y));
 
 		//MazeGame::gameField.addNewGameObject(new Seeker<SimpleOctagon>{init.x, init.y, 5.0f, 5.0f, {1.0f, 1.0f, 1.0f}, player});
 
 		do{
-			init = *MazeGame::gameField.getRandomCell(MazeGame::CellType::PATH);
-		}while(MazeGame::gameField.isThereObjectsInCell(init.x, init.y));
+			init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
+		}while(MazeGame::gameCore->isThereObjectsInCell(init.x, init.y));
 
-		MazeGame::gameField.addNewGameObject(new MazeGame::CoinObject{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f});
+		MazeGame::gameCore->addNewGameObject(new MazeGame::CoinObject{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f});
 		spawnCannon();
 	}
+
+	std::cout << "Log: " << "Complete." << std::endl;
 
 
 // STEP 5: finishing initialization, updating static vertices and setting up camera
@@ -390,10 +392,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	testWindow->addNewItem(new MazeUI::Button("More coins!", [](){
 		MazeGame::Cell cell;
 		do{
-			cell = *MazeGame::gameField.getRandomCell(MazeGame::CellType::PATH);
-		}while(MazeGame::gameField.isThereObjectsInCell(cell.x, cell.y));
+			cell = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
+		}while(MazeGame::gameCore->isThereObjectsInCell(cell.x, cell.y));
 
-		MazeGame::gameField.addNewGameObject(new MazeGame::CoinObject{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
+		MazeGame::gameCore->addNewGameObject(new MazeGame::CoinObject{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
 		spawnCannon();
 	
 	}));
@@ -409,15 +411,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	int cycles = 3;
 
 	MazeUI::Window* debugWindow = new MazeUI::Window("Maze params", 0.7f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameField.getHeight(), "Height"));
-	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameField.getWidth(), "Width"));
+	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameCore->getHeight(), "Height"));
+	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameCore->getWidth(), "Width"));
 	debugWindow->addNewItem(new MazeUI::InputBox("Straightness", straightness, 0, 20));
 	debugWindow->addNewItem(new MazeUI::InputBox("Cycleness", cycles, 0, 10));
 	
 	debugWindow->addNewItem(new MazeUI::Button("Recreate Maze", [&straightness, &cycles](){
-		MazeGame::gameField.generateRandomMaze(straightness, static_cast<float>(cycles));
-		delete MazeGame::fieldModel;
-		MazeGame::fieldModel = new FieldModel{};
+		MazeGame::gameCore->generateRandomMaze(straightness, static_cast<float>(cycles));
+		MazeGame::gameCore->recreate();
 		drawer->updateStaticVertices();
 	}));
 
@@ -439,14 +440,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	
 		auto tStart = std::chrono::high_resolution_clock::now();
 
-		MazeGame::gameField.update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
+		MazeGame::gameCore->update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		drawer->handleEvents(); // LISTENING TO USER INPUT
 #endif
 	//	player->moveInDirection();
 		camKeep.holdCamera();
 		if(MazeGame::should_update_static_vertices){
-			MazeGame::fieldModel->recreate();
+			MazeGame::gameCore->recreate();
 			drawer->updateStaticVertices();
 			MazeGame::should_update_static_vertices = false;
 		}
@@ -483,8 +484,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 // FREEING THE ALLOCATED DATA
 
-	MazeGame::gameField.freeGameObjects();
-	delete MazeGame::fieldModel;
+	delete MazeGame::gameCore;
 
 
 

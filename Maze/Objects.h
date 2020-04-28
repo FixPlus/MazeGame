@@ -1,7 +1,7 @@
 #pragma once
 #include "GameField.h"
 #include "Models.h"
-
+#include "GameCore.h"
 
 /*
 
@@ -24,15 +24,113 @@
 
 namespace MazeGame{
 
-extern ::triGraphic::FieldModel* fieldModel;
+extern GameCore* gameCore;
 extern bool should_update_static_vertices; 
 
 using namespace triGraphic;
 
+
+
+Cell* GameObject::getCell(){
+	return gameCore->getCell(static_cast<int>(round(x)), static_cast<int>(round(y)));
+}
+
+class DynamicObject: public virtual GameObject {
+	bool moving = false;
+	int xFrom, yFrom, xDest, yDest;
+protected:
+	Cell* destination = NULL;
+	float progression = 0.0f;
+public:
+	float speed = 1.0f;
+
+	explicit DynamicObject(int ispeed = 1.0f): speed(ispeed){};
+
+
+	virtual bool canMove(Cell const* from, Cell const* into) = 0;
+
+	void moveObj(int dir){
+		if(moving)
+			return;
+		Cell* dest = gameCore->getNeiCell(getCell(), static_cast<enum Dirs>(dir));
+		if(dest == nullptr)
+			return;
+	
+
+		if(canMove(getCell(), dest)){
+			destination = dest;
+			destination->addNewObject(this);
+
+			xFrom = getCell()->x;
+			yFrom = getCell()->y;
+
+			xDest = destination->x;
+			yDest = destination->y;
+
+
+			progression = 0.0f;
+			moving = true;
+		}
+	};
+	void moveObj(int x, int y){
+		if(moving)
+			return;
+
+		Cell* dest = gameCore->getCell(x, y);
+
+		if(dest == nullptr)
+			return;
+
+		if(canMove(getCell(), dest)){
+			destination = dest;
+			destination->addNewObject(this);
+
+			xFrom = getCell()->x;
+			yFrom = getCell()->y;
+
+			xDest = destination->x;
+			yDest = destination->y;
+
+			progression = 0.0f;
+			moving = true;
+		}
+
+	};
+
+	void update(float dt) override{
+		if(moving){
+			progression += dt * speed;
+			
+			x = static_cast<float>(xFrom) * (1.0f - progression) + static_cast<float>(xDest) * progression;
+			y = static_cast<float>(yFrom) * (1.0f - progression) + static_cast<float>(yDest) * progression;
+			if(progression >= 1.0f){
+				parent->removeObject(this);
+				parent = destination;
+
+				x = destination->x;
+				y = destination->y;
+				moving = false;
+				progression -= 1.0f;
+			}
+		}
+	}
+	
+	bool isMoving(){
+		return moving;
+	}
+
+	~DynamicObject(){
+		if(destination != nullptr && destination != parent)
+			destination->removeObject(this);
+	}
+};
+
+
+
 class ModeledObject: public virtual GameObject, public virtual Model {
 protected:
 	void setInPosition(){
-		set({(x + 0.5f) * MazeGame::fieldModel->getCellSize(), MazeGame::fieldModel->getZeroLevel() - 5.0f,(y + 0.5f) * MazeGame::fieldModel->getCellSize()});		
+		set({(x + 0.5f) * gameCore->getCellSize(), gameCore->getZeroLevel() - 5.0f,(y + 0.5f) * gameCore->getCellSize()});		
 	}
 public:
 	ModeledObject() {
@@ -45,6 +143,7 @@ public:
 };
 
 
+
 class DynamicModeledObject: public virtual ModeledObject, public DynamicObject {
 public:
 	explicit DynamicModeledObject(float ispeed = 1.0f):
@@ -54,7 +153,7 @@ public:
 	};
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !MazeGame::gameField.isThereObjectsInCell(into->x, into->y)) ? true : false;
+		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y)) ? true : false;
 	}
 
 	void update(float dt) override{
@@ -118,7 +217,7 @@ public:
 	}
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !MazeGame::gameField.isThereObjectsInCell(into->x, into->y, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
+		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
 	}
 
 	void moveInDirection(){
@@ -226,7 +325,7 @@ public:
 	};
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !MazeGame::gameField.isThereObjectsInCell(into->x, into->y, [this](GameObject const * obj) -> bool{ return !obj->isTransparent() && !(obj == aim);}));
+		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y, [this](GameObject const * obj) -> bool{ return !obj->isTransparent() && !(obj == aim);}));
 	}
 
 	void setAim(GameObject* newAim){
@@ -241,7 +340,7 @@ public:
 				return;
 			}
 			if(counter > 20){
-				path = MazeGame::gameField.findPath(x, y, aim->x, aim->y); /*, [this](Cell const* from, Cell const* into) -> bool{
+				path = gameCore->findPath(x, y, aim->x, aim->y); /*, [this](Cell const* from, Cell const* into) -> bool{
 					return (into && into->type == CellType::PATH && !MazeGame::gameField.isThereObjectsInCell(into->x, into->y, 
 						[this](GameObject const * obj) -> bool{ return !obj->isTransparent() && !(obj == aim);})) ? true : false;
 				});
@@ -367,7 +466,7 @@ public:
 			case CS_FIRING:{
 				launch_timer += dt;
 				if(launch_timer > 1.0 / fire_rate){
-					MazeGame::gameField.addNewGameObject(new Bullet<SimpleOctagon>{static_cast<float>(parent->x), static_cast<float>(parent->y), 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
+					gameCore->addNewGameObject(new Bullet<SimpleOctagon>{static_cast<float>(parent->x), static_cast<float>(parent->y), 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
 					launch_timer = 0.0;
 				}
 				break;
@@ -380,7 +479,7 @@ public:
 				bool back_is_possible = false;
 				for(int i = 0; i < 4; ++i){
 
-					Cell* dest = MazeGame::gameField.getNeiCell(getCell(), static_cast<enum Dirs>(i * 2));
+					Cell* dest = gameCore->getNeiCell(getCell(), static_cast<enum Dirs>(i * 2));
 					if(dest && canMove(parent, dest)){
 						if(i != ((dir + 2) % 4)){
 							count_dirs++;
