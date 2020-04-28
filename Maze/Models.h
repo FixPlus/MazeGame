@@ -22,6 +22,7 @@
 
 namespace MazeGame{
 	extern ::triGraphic::DTManager triManager;
+	extern bool should_update_static_vertices;
 };
 
 namespace triGraphic{
@@ -947,6 +948,7 @@ public:
 
 	void recreate(){
 		setup();
+		MazeGame::should_update_static_vertices = true;
 	}
 
 	Field& operator=(Field&& another){

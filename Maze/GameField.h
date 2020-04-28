@@ -201,14 +201,6 @@ public:
 
 	}
 
-	bool isThereObjectsInCell(int x, int y, std::function<bool(const GameObject*)> rule = [](const GameObject* obj) -> bool{ return true; }) const{
-		Cell const* cell = getCell(x, y);
-		for(auto object: cell->objects)
-			if(rule(object))
-				return true;
-
-		return false;
-	}
 
 	// up right down left
 	std::vector<bool> openSideFaces(int x, int y) const{

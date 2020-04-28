@@ -365,7 +365,6 @@ void VulkanExampleBase::renderLoop()
 		}
 
 #endif
-		updateOverlay();
 	// Flush device to make sure all resources can be freed
 }
 
@@ -389,7 +388,7 @@ void VulkanExampleBase::updateOverlay()
 	io.MouseDown[1] = mouseButtons.right;
 
 
-	MazeUI::manager.update(width, height);
+	bool man_upd = MazeUI::manager.update(width, height);
 
 
 /*
@@ -437,7 +436,7 @@ void VulkanExampleBase::updateOverlay()
 
 
 
-	if (UIOverlay.update() || UIOverlay.updated) {
+	if (UIOverlay.update() || UIOverlay.updated || man_upd) {
 		buildCommandBuffers();
 		UIOverlay.updated = false;
 	}
@@ -1050,6 +1049,7 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		}
 		break;
 	case WM_LBUTTONDOWN:
+		UIOverlay.updated = true;
 		custom_message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
 		custom_message.detail = 0;
 		mousePos = glm::vec2((float)LOWORD(lParam), (float)HIWORD(lParam));
@@ -1752,7 +1752,7 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 	case XCB_BUTTON_PRESS:
 	{
 		message.type = UserInputMessage::Type::UIM_MOUSE_BTN_DOWN;
-
+		UIOverlay.updated = true;
 		xcb_button_press_event_t *press = (xcb_button_press_event_t *)event;
 		if (press->detail == XCB_BUTTON_INDEX_1){
 			message.detail = 0;

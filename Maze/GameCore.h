@@ -2,7 +2,7 @@
 
 
 #include "Models.h"
-
+#include "InputHandler.h"
 
 
 namespace MazeGame{
@@ -23,9 +23,7 @@ public:
 		return parent;
 	}
 
-	explicit GameObject(float ix = 0, float iy = 0):
-	 x(ix), y(iy){ parent = getCell(); getCell()->addNewObject(this); count++;};
-
+	explicit GameObject(Cell* par): x(par->x), y(par->y), parent(par){ parent->addNewObject(this); count++;};
 
 	bool isExpired() const{
 		return expired;
@@ -49,15 +47,22 @@ public:
 
 	};
 
+
 	virtual ~GameObject(){
 		count--;
 		parent->removeObject(this);
 	};
+
+
 };
 
 class GameCore: public ::triGraphic::Field{
-	
+
 	std::list<GameObject*> objects;
+protected:
+
+	bool quit = false;
+	InputHandler inputHandler;
 
 public:
 	GameCore(int f_w = 50, int f_h = 50): ::triGraphic::Field(f_w, f_h){};
@@ -91,6 +96,7 @@ public:
 		objects.remove_if([](GameObject* const& obj) -> bool { return obj == nullptr; });
 	}
 
+	virtual void initialize() = 0;
 
 
 	GameObject* addNewGameObject(GameObject* object){
@@ -108,8 +114,24 @@ public:
 		objects.resize(0);	
 	}
 
+	InputHandler& getInputHandler(){
+		return inputHandler;
+	}
+
 	virtual ~GameCore(){
 		freeGameObjects();
+	}
+
+	bool shouldQuit(){
+		return quit;
+	}
+
+	static bool isThereObjectsInCell(Cell const* cell, std::function<bool(const GameObject*)> rule = [](const GameObject* obj) -> bool{ return true; }) {
+		for(auto object: cell->objects)
+			if(rule(object))
+				return true;
+
+		return false;
 	}
 
 };

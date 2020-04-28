@@ -153,7 +153,7 @@ public:
 	};
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y)) ? true : false;
+		return (into && into->type == CellType::PATH && !GameCore::isThereObjectsInCell(into)) ? true : false;
 	}
 
 	void update(float dt) override{
@@ -217,7 +217,7 @@ public:
 	}
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
+		return (into && into->type == CellType::PATH && !GameCore::isThereObjectsInCell(into, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
 	}
 
 	void moveInDirection(){
@@ -241,16 +241,16 @@ public:
 
 class LoadableDynamicModeledObject: public DynamicModeledObject, public DynamicLodableModel{
 public:
-	explicit LoadableDynamicModeledObject(std::string filename,  float ix = 0, float iy = 0, float ispeed = 1.0f, float scale = 1.0f):
-	Model(), GameObject(ix, iy), DynamicModeledObject(ispeed), DynamicLodableModel(filename, scale){ setInPosition();};
+	explicit LoadableDynamicModeledObject(std::string filename,  Cell* par, float ispeed = 1.0f, float scale = 1.0f):
+	Model(), GameObject(par), DynamicModeledObject(ispeed), DynamicLodableModel(filename, scale){ setInPosition();};
 };
 
 class CoinObject: public ModeledObject, public CoinModel {
 	int nominal = 10;
 public:
 	static int count;
-	explicit CoinObject(float ix = 0, float iy = 0, float size = 5.0f): 
-	Model(), GameObject(ix, iy), CoinModel(size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
+	explicit CoinObject(Cell* par, float size = 5.0f): 
+	Model(), GameObject(par), CoinModel(size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
 
 	void printObjectInfo() const override{
 		std::cout << "Coin" << std::endl;
@@ -284,8 +284,8 @@ public:
 template <typename AnyDynamicModel>
 class PlayerObject: public DynamicDirectedObject, public AnyDynamicModel {
 public:
-	explicit PlayerObject(float ix = 0, float iy = 0, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(ix, iy), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ };
+	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -319,13 +319,13 @@ class Seeker: public DynamicModeledObject, public AnyDynamicModel{
 	int counter = 0;
 public:
 
-	explicit Seeker(int ix = 0, int iy = 0, float size = 5.0f, float ispeed = 1.0f, glm::vec3 color = {1.0f, 1.0f, 1.0f}, GameObject* iaim = NULL): 
-	GameObject(ix, iy), Model(), AnyDynamicModel(size, color), DynamicModeledObject(ispeed), aim(iaim){
+	explicit Seeker(Cell* par, float size = 5.0f, float ispeed = 1.0f, glm::vec3 color = {1.0f, 1.0f, 1.0f}, GameObject* iaim = NULL): 
+	GameObject(par), Model(), AnyDynamicModel(size, color), DynamicModeledObject(ispeed), aim(iaim){
 		speed = ispeed;
 	};
 
 	bool canMove(Cell const* from, Cell const* into) override{
-		return (into && into->type == CellType::PATH && !gameCore->isThereObjectsInCell(into->x, into->y, [this](GameObject const * obj) -> bool{ return !obj->isTransparent() && !(obj == aim);}));
+		return (into && into->type == CellType::PATH && !GameCore::isThereObjectsInCell(into, [this](GameObject const * obj) -> bool{ return !obj->isTransparent() && !(obj == aim);}));
 	}
 
 	void setAim(GameObject* newAim){
@@ -389,8 +389,8 @@ template <typename AnyDynamicModel>
 class Bullet: public DynamicDirectedObject, public AnyDynamicModel{
 	int id;
 public:
-	explicit Bullet(float ix = 0, float iy = 0, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
-	GameObject(ix, iy), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), id(iid){ transparent_ = true; setInPosition(); };
+	explicit Bullet(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), id(iid){ transparent_ = true; setInPosition(); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::POWERUP, id};
@@ -453,8 +453,8 @@ class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
 
 	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 public:
-	explicit Cannon(float ix = 0, float iy = 0, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
-	GameObject(ix, iy), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), fire_rate(fr) { setInPosition(); id = next_id++;};
+	explicit Cannon(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), fire_rate(fr) { setInPosition(); id = next_id++;};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::NPC, id};
@@ -466,7 +466,7 @@ public:
 			case CS_FIRING:{
 				launch_timer += dt;
 				if(launch_timer > 1.0 / fire_rate){
-					gameCore->addNewGameObject(new Bullet<SimpleOctagon>{static_cast<float>(parent->x), static_cast<float>(parent->y), 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
+					gameCore->addNewGameObject(new Bullet<SimpleOctagon>{parent, 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
 					launch_timer = 0.0;
 				}
 				break;

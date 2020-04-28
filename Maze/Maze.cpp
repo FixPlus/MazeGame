@@ -1,7 +1,6 @@
 #include "drawer.h"
-#include "GameCore.h"
 #include "Models.h"
-#include "Objects.h"
+#include "GameManager.h"
 #include "MazeUI.h"
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
@@ -80,13 +79,10 @@
 using namespace triGraphic;
 
 Drawer* drawer;
-MazeGame::PlayerObject<SimpleArrow>* player; // TODO: Move player object in MECH_MANAGER class
 
 
 
 DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
-//MazeGame::CellField MazeGame::gameField;    // Global game field - core object of the game, used by all in game objects
-//FieldModel* MazeGame::fieldModel; // Global field model, that used to draw a game field and other enviropment
 MazeGame::GameCore* MazeGame::gameCore;
 MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
 bool MazeGame::should_update_static_vertices = false; 
@@ -95,48 +91,12 @@ int MazeGame::CoinObject::count = 0;
 int MazeGame::GameObject::count = 0;
 template<typename AnyDynamicModel>
 int MazeGame::Cannon<AnyDynamicModel>::next_id = 1;
-bool force_quit = false;
+float MAZE_FPS = 0.0f;
 
 
 
 
 
-// TODO:: move CameraKeeper out of Maze.cpp, rearrange camera control
-
-class CameraKeeper final {
-	
-	Drawer* drawer;
-	glm::vec3 disposal;
-	Model* objectToFixAt;
-
-public:
-	CameraKeeper(Drawer* idrawer = NULL,Model* objTofixAt = NULL, glm::vec3 idisposal = {-15.0f, -15.0f, -15.0f}): drawer(idrawer), objectToFixAt(objTofixAt), disposal(idisposal){
-	};
-
-	void setDisposal(glm::vec3 newDisposal){
-		disposal = newDisposal;
-	};
-
-	void holdCamera(){
-		if(drawer)
-			drawer->moveCamera(-objectToFixAt->getPosition() - disposal);
-
-	};
-
-	void scaleDisposal(float mult){
-		disposal *= mult;
-	};
-
-	void rotateDisposal(glm::vec3 axis, float angle){
-		glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians(angle), axis);
-
-		disposal = glm::vec3(rotateMat * glm::vec4(disposal, 0.0f));
-
-		drawer->rotateCamera(axis.x * angle, axis.y * angle, axis.z * angle);
-		holdCamera();
-	}
-
-};
 
 class FpsCounter{
 	float timer = 0.0f;
@@ -149,6 +109,7 @@ public:
 		timer += dt;
 		if(timer >= 1.0f){
 			fps = static_cast<float>(frame_count) / timer;
+			MAZE_FPS = fps;
 			timer = 0.0f;
 			frame_count = 0;
 		}
@@ -158,66 +119,8 @@ public:
 
 
 
-CameraKeeper camKeep;
 FpsCounter fpsCounter;
 
-
-// TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
-
-void gameHandleEvents(UserInputMessage message){
-	switch (message.type){
-		case UserInputMessage::Type::UIM_KEYDOWN: //Keyboard input
-		{
-		switch (message.detail)
-			{
-				case KEY_W:{
-					player->moveInDirection();
-					break;
-				}
-				case KEY_S:
-					player->changeDirection(player->getDir() + 2);
-					break;
-				case KEY_A:
-					player->changeDirection(player->getDir() + 3);
-					break;
-				case KEY_D:
-					player->changeDirection(player->getDir() + 1);
-					break;
-				case KEY_R:
-					MazeGame::gameCore->addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(static_cast<float>(player->getCell()->x), static_cast<float>(player->getCell()->y), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
-					break;
-				case KEY_P:
-					break;
-				case KEY_F1:
-					break;				
-			}
-			break;
-		}
-		case UserInputMessage::Type::UIM_KEYUP:{
-
-			break;
-		}
-		case UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE:{
-			float dir = message.s_detail > 0 ? 1.0f : -1.0f;
-			camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f * dir);
-			break;			
-		}
-		case UserInputMessage::Type::UIM_MOUSE_BTN_DOWN:
-		{
-
-		}
-		break;
-		case UserInputMessage::Type:: UIM_MOUSE_BTN_UP:
-		{
-
-		}
-
-		break;
-		default:
-		break;
-	}	
-
-}
 
 #if defined(_WIN32)
 
@@ -232,17 +135,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 #endif
-
-
-void spawnCannon(){
-	MazeGame::Cell cell;
-	do{
-		cell = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
-	}while(MazeGame::gameCore->isThereObjectsInCell(cell.x, cell.y));
-
-	MazeGame::gameCore->addNewGameObject(new MazeGame::Cannon<SimpleArrow>{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
-
-}
 
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
@@ -312,140 +204,53 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 // INITIALIZATION PROCESS
 
 // STEP 1 : Starting a graphics core
+	MazeGame::GameCore*& gc_ref = MazeGame::gameCore;
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
-	
-	drawer = new Drawer(style, nullptr, gameHandleEvents, "MazeGame");
+	drawer = new Drawer(style, nullptr, [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
 
 #elif defined(_WIN32)
 
-	drawer = new Drawer(hInstance, WndProc, style, gameHandleEvents, "MazeGame");
+	drawer = new Drawer(hInstance, WndProc, style, [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
 
 #endif
 //	drawer->uboVS.lodBias = 6.0f;
 
 
-// STEP 2 : Creating and generating a gameField
-
-
-	// TODO: rearrange the gameField creation and recreation inside game mechanics class(aka MECH_MANAGER) and make it free out of triangle manager   
-
-
-// STEP 3 : Initializing triangle manager
+// STEP 2 : Initializing triangle manager
 
 	MazeGame::triManager = DTManager{drawer, 25000, 25000};
 
 
-// STEP 4: Setting up models and constructing game objects
+// STEP 3: Initializing GameManager
 
 
 
 	//TODO: organize GameObjects creation in some manager class (aka MECH_MANAGER), move there all game mechanics realization
 
-	MazeGame::gameCore = new MazeGame::GameCore{fieldSize, fieldSize};
-	MazeGame::gameCore->generateRandomMaze();
-	MazeGame::gameCore->recreate();
+	MazeGame::gameCore = new MazeGame::GameManager{fieldSize, fieldSize};
 	
+	MazeGame::gameCore->initialize();
 
 
-	MazeGame::Cell init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
-
-
-	player = dynamic_cast<MazeGame::PlayerObject<SimpleArrow>*>(MazeGame::gameCore->addNewGameObject(new MazeGame::PlayerObject<SimpleArrow>{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
-
-	for(int i = 0; i < number_of_creatures; i++){
-		do{
-			init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
-		}while(MazeGame::gameCore->isThereObjectsInCell(init.x, init.y));
-
-		//MazeGame::gameField.addNewGameObject(new Seeker<SimpleOctagon>{init.x, init.y, 5.0f, 5.0f, {1.0f, 1.0f, 1.0f}, player});
-
-		do{
-			init = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
-		}while(MazeGame::gameCore->isThereObjectsInCell(init.x, init.y));
-
-		MazeGame::gameCore->addNewGameObject(new MazeGame::CoinObject{static_cast<float>(init.x), static_cast<float>(init.y), 5.0f});
-		spawnCannon();
-	}
-
-	std::cout << "Log: " << "Complete." << std::endl;
-
-
-// STEP 5: finishing initialization, updating static vertices and setting up camera
+// STEP 4: finishing initialization, updating static vertices
 
 	drawer->updateStaticVertices();
-
-
-	camKeep = CameraKeeper{drawer, player, {-70.0f,-60.0f,-70.0f}};
-	camKeep.scaleDisposal(0.5);
-
-//STEP 5.1 initializing user interface 
-
-	//TODO: make a special class managing intialization and re-initialization of UI 
-
-	MazeUI::Window* testWindow = new MazeUI::Window("Maze game", 0.0f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	testWindow->addNewItem(new MazeUI::StatText<float>(fpsCounter.fps, "fps"));
-	testWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::CoinObject::count, "Coins left"));
-	testWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::GameObject::count, "Objects"));
-	testWindow->addNewItem(new MazeUI::StatText<float>(player->x, "x"));
-	testWindow->addNewItem(new MazeUI::StatText<float>(player->y, "y"));
-	testWindow->addNewItem(new MazeUI::Button("More coins!", [](){
-		MazeGame::Cell cell;
-		do{
-			cell = *(MazeGame::gameCore->getRandomCell(MazeGame::CellType::PATH));
-		}while(MazeGame::gameCore->isThereObjectsInCell(cell.x, cell.y));
-
-		MazeGame::gameCore->addNewGameObject(new MazeGame::CoinObject{static_cast<float>(cell.x), static_cast<float>(cell.y), 5.0f});
-		spawnCannon();
-	
-	}));
-
-
-	MazeUI::Window* exitWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-	exitWindow->addNewItem(new MazeUI::Button("Exit", [](){
-		force_quit = true;
-	}));
-
-
-	int straightness = 5;
-	int cycles = 3;
-
-	MazeUI::Window* debugWindow = new MazeUI::Window("Maze params", 0.7f, 0.7f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameCore->getHeight(), "Height"));
-	debugWindow->addNewItem(new MazeUI::StatText<int>(MazeGame::gameCore->getWidth(), "Width"));
-	debugWindow->addNewItem(new MazeUI::InputBox("Straightness", straightness, 0, 20));
-	debugWindow->addNewItem(new MazeUI::InputBox("Cycleness", cycles, 0, 10));
-	
-	debugWindow->addNewItem(new MazeUI::Button("Recreate Maze", [&straightness, &cycles](){
-		MazeGame::gameCore->generateRandomMaze(straightness, static_cast<float>(cycles));
-		MazeGame::gameCore->recreate();
-		drawer->updateStaticVertices();
-	}));
-
-	MazeUI::Window* hintWindow = new MazeUI::Window("Hint", 0.0f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	hintWindow->addNewItem(new MazeUI::Text("Press 'R' to fire"));
-
-
-	MazeUI::manager.addNewElement(testWindow);
-	MazeUI::manager.addNewElement(exitWindow);
-	MazeUI::manager.addNewElement(debugWindow);
-	MazeUI::manager.addNewElement(hintWindow);
-
 	drawer->updateOverlay();
 
 // GAME LOOP STARTS HERE
 
-	while(!drawer->shouldQuit() && MazeGame::CoinObject::count > 0 && !force_quit){
+	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit()){
 
 	
 		auto tStart = std::chrono::high_resolution_clock::now();
 
-		MazeGame::gameCore->update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE   TODO: Move game events to MECH_MANAGER class
+		MazeGame::gameCore->update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE
+
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		drawer->handleEvents(); // LISTENING TO USER INPUT
 #endif
 	//	player->moveInDirection();
-		camKeep.holdCamera();
 		if(MazeGame::should_update_static_vertices){
 			MazeGame::gameCore->recreate();
 			drawer->updateStaticVertices();
