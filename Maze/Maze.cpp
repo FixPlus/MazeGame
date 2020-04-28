@@ -164,7 +164,6 @@ FpsCounter fpsCounter;
 // TODO: move gameHandleEvents out of Maze.cpp, create special class that will handle it
 
 void gameHandleEvents(UserInputMessage message){
-//	std::cout << "Event id:" << (event->response_type & 0x7f) <<  std::endl;
 	switch (message.type){
 		case UserInputMessage::Type::UIM_KEYDOWN: //Keyboard input
 		{
@@ -194,11 +193,10 @@ void gameHandleEvents(UserInputMessage message){
 			break;
 		}
 		case UserInputMessage::Type::UIM_KEYUP:{
-//			std::cout << "Released" << std::endl;
+
 			break;
 		}
 		case UserInputMessage::Type::UIM_MOUSEWHEEL_MOVE:{
-			//std::cout << static_cast<int>(message.s_detail) << std::endl;
 			float dir = message.s_detail > 0 ? 1.0f : -1.0f;
 			camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f * dir);
 			break;			
@@ -206,25 +204,11 @@ void gameHandleEvents(UserInputMessage message){
 		case UserInputMessage::Type::UIM_MOUSE_BTN_DOWN:
 		{
 
-/*			if (press->detail == XCB_BUTTON_INDEX_1)
-				mouseButtons.left = true;
-			if (press->detail == XCB_BUTTON_INDEX_2)
-				mouseButtons.middle = true;
-			if (press->detail == XCB_BUTTON_INDEX_3)
-				mouseButtons.right = true;
-*/
 		}
 		break;
 		case UserInputMessage::Type:: UIM_MOUSE_BTN_UP:
 		{
-//			std::cout << "Button release details: " << static_cast<int>(press->detail) <<std::endl;
-/*			if (press->detail == XCB_BUTTON_INDEX_1)
-				mouseButtons.left = false;
-			if (press->detail == XCB_BUTTON_INDEX_2)
-				mouseButtons.middle = false;
-			if (press->detail == XCB_BUTTON_INDEX_3)
-				mouseButtons.right = false;
-*/
+
 		}
 
 		break;
@@ -350,7 +334,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 // STEP 3 : Initializing triangle manager
 
-	MazeGame::triManager = DTManager{drawer, 25000, 20000};
+	MazeGame::triManager = DTManager{drawer, 25000, 25000};
 
 
 // STEP 4: Setting up models and constructing game objects

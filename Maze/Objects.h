@@ -181,6 +181,7 @@ public:
 
 
 
+
 template <typename AnyDynamicModel>
 class PlayerObject: public DynamicDirectedObject, public AnyDynamicModel {
 public:
