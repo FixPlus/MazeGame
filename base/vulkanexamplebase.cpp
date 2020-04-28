@@ -363,7 +363,7 @@ void VulkanExampleBase::renderLoop()
 			frameCounter = 0;
 			lastTimestamp = tEnd;
 		}
-
+	updateOverlay();
 #endif
 	// Flush device to make sure all resources can be freed
 }
@@ -389,51 +389,6 @@ void VulkanExampleBase::updateOverlay()
 
 
 	bool man_upd = MazeUI::manager.update(width, height);
-
-
-/*
-	//FIRST WINDOW
-
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::SetNextWindowPos(ImVec2(width * 0.1, height * 0.8));
-	ImGui::SetNextWindowSize(ImVec2(width * 0.1, height * 0.2), ImGuiSetCond_FirstUseEver);
-	ImGui::Begin("This is the Maze Game", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove| ImGuiWindowFlags_NoCollapse);
-	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
-
-	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
-	OnUpdateUIOverlay(&UIOverlay);
-	ImGui::PopItemWidth();
-
-
-	ImGui::End();
-	ImGui::PopStyleVar();
-
-*/
-//	ImGui::Render();
-	
-
-
-	//SECOND WINDOW
-/*
-//	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 1);
-	ImGui::SetNextWindowPos(ImVec2(500, 500));
-	ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiSetCond_Once);
-	ImGui::Begin("This is theFFF Maze Game", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-//	ImGui::TextUnformatted(title.c_str());
-//	ImGui::TextUnformatted(deviceProperties.deviceName);
-//	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / lastFPS), lastFPS);
-
-	ImGui::PushItemWidth(110.0f * UIOverlay.scale);
-	ImGui::PopItemWidth();
-
-
-	ImGui::End();
-//	ImGui::PopStyleVar();
-*/
-
-
-
-
 
 
 	if (UIOverlay.update() || UIOverlay.updated || man_upd) {
