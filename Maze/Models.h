@@ -31,8 +31,13 @@ using triIterator = std::vector<DrawableTriangle>::iterator;
 
 
 class Model : public Rotatible{
+	void updTriangles();
 protected:
 	std::vector<DrawableTriangle> triangles;
+	std::vector<std::pair<glm::vec3, glm::vec3>> localVertices; // <position, normal>
+	glm::mat4 scaleMat = glm::mat4(1.0f);
+	glm::mat4 rotateMat = glm::mat4(1.0f);
+	glm::mat4 translateMat = glm::mat4(1.0f);
 	int size_;
 	glm::vec3 node = {0.0f, 0.0f, 0.0f};
 	void virtual setup() = 0;
@@ -60,30 +65,26 @@ public:
 
 	void set(glm::vec3 const &position){
 		glm::vec3 shift = position - node;
-		for(int i = 0; i < size_; i++)
+		translateMat = glm::translate(translateMat, shift);
+/*		for(int i = 0; i < size_; i++)
 			triangles[i].move(shift);
-
+*/
 		node = position;
 
-		for(auto& rot: rotations){
-			rot.first.first += shift;
-			rot.first.second += shift;
-
-		}
+		updTriangles();
 
 	}
 
 	void move(glm::vec3 const &shift){
-		for(int i = 0; i < size_; i++)
+		translateMat = glm::translate(translateMat, shift);
+/*		
+	for(int i = 0; i < size_; i++)
 			triangles[i].move(shift);
+*/
 
 		node += shift;
+		updTriangles();
 
-		for(auto& rot: rotations){
-			rot.first.first += shift;
-			rot.first.second += shift;
-
-		}
 	}
 
 	void setColor(glm::vec3 newColor){
@@ -97,81 +98,67 @@ public:
 	}
 
 	void scale(float mult){
-		for(int i = 0; i < size_; i++){
-			auto& tri = triangles[i];
-			for(int j = 0; j < 3; j++){
-				tri.vertex(j).position -= node;
-				tri.vertex(j).position *= mult;
-				tri.vertex(j).position += node;
-
-			}
-		}
+		scaleMat = glm::scale(scaleMat, glm::vec3{mult, mult, mult});
 	}
 
 
 	void rotate(float dt) {
+		
 		for(int i = 0; i < rotations.size(); i++){
 			
-			glm::vec3 rotRoot = rotations[i].first.first;
-			glm::vec3 rotAxis = rotations[i].first.second - rotRoot;
+			glm::vec3 rotAxis = rotations[i].first;
 			float rotSpeed = rotations[i].second;
 
-			glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians(rotSpeed * dt), rotAxis);
-			for(int j = i + 1; j < rotations.size(); j++){
-				rotations[j].first.first -= rotRoot;
-				rotations[j].first.first = glm::vec3(rotateMat * glm::vec4(rotations[j].first.first, 0.0f));
-				rotations[j].first.first += rotRoot;
+			glm::mat4 curRotMat = glm::rotate(glm::mat4(1.0f), glm::radians(rotSpeed * dt), rotAxis);
+			rotateMat = curRotMat * rotateMat;
+			//for(int j = i + 1; j < rotations.size(); j++)
+				//rotations[j].first = glm::vec3(rotateMat * glm::vec4(rotations[j].first, 0.0f));
 
-				rotations[j].first.second -= rotRoot;
-				rotations[j].first.second = glm::vec3(rotateMat * glm::vec4(rotations[j].first.second, 0.0f));
-				rotations[j].first.second += rotRoot;
-			}
-
-			for(int j = 0; j < size_; j++){
-				DrawableTriangle& tri = triangles[j];
-				for(int k = 0; k < 3; k++){
-					tri.vertex(k).position -= rotRoot;
-					tri.vertex(k).position = glm::vec3(rotateMat * glm::vec4(tri.vertex(k).position, 0.0f));
-					tri.vertex(k).position += rotRoot;
-					tri.vertex(k).normal = glm::vec3(rotateMat * glm::vec4(tri.vertex(k).normal, 0.0f));
-				}
-			}
 		}
+	
+		updTriangles();
+
 	};
 
 	void rotate(glm::vec3 rotAxis, float angle) {
-		glm::vec3 rotRoot = node;
+		
+			glm::mat4 curRotMat = glm::rotate(glm::mat4(1.0f), glm::radians(angle), rotAxis);
+			rotateMat = curRotMat * rotateMat;
+			for(int j = 0; j < rotations.size(); j++)
+				rotations[j].first = glm::vec3(curRotMat * glm::vec4(rotations[j].first, 0.0f));
 
-		glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians(angle), rotAxis);
-
-		for(int j = 0; j < rotations.size(); j++){
-			rotations[j].first.first -= rotRoot;
-			rotations[j].first.first = glm::vec3(rotateMat * glm::vec4(rotations[j].first.first, 0.0f));
-			rotations[j].first.first += rotRoot;
-
-			rotations[j].first.second -= rotRoot;
-			rotations[j].first.second = glm::vec3(rotateMat * glm::vec4(rotations[j].first.second, 0.0f));
-			rotations[j].first.second += rotRoot;
-		}
-
-
-	
-		for(int j = 0; j < size_; j++){
-			DrawableTriangle& tri = triangles[j];
-			for(int k = 0; k < 3; k++){
-				tri.vertex(k).position -= rotRoot;
-				tri.vertex(k).position = glm::vec3(rotateMat * glm::vec4(tri.vertex(k).position, 0.0f));
-				tri.vertex(k).position += rotRoot;
-				tri.vertex(k).normal = glm::vec3(rotateMat * glm::vec4(tri.vertex(k).normal, 0.0f));
-			}
-		}
+		updTriangles();
+		
 	};
 
+	void faceOnAxis(glm::vec3 axis){
+		axis = glm::normalize(axis);
+		glm::vec3 roNorm = glm::cross(axis, {0.0f, 0.0f, 1.0f});
+		float angle = acos(glm::dot(axis, {0.0f, 0.0f, 1.0f}));
+		rotateMat = glm::rotate(glm::mat4(1.0f), angle, roNorm);
+	}
+
+	void prepareLocalVertices(){
+		for(int i = 0; i < size_; i++)
+			for(int j = 0; j < 3; j++)
+				localVertices.emplace_back(std::make_pair(triangles[i].vertex(j).position, triangles[i].vertex(j).normal));
+			
+	}
 //	virtual void initialize(vertIterator initVertIt) = 0;
 	virtual ~Model(){
 
 	};
 };
+
+void Model::updTriangles(){
+	glm::mat4 modelMat = translateMat  * rotateMat * scaleMat;
+	for(int i = 0; i < size_; i++){
+		for(int j = 0; j < 3; j++){
+			triangles[i].vertex(j).position = glm::vec3(modelMat * glm::vec4(localVertices[i * 3 + j].first , 1.0f));
+			triangles[i].vertex(j).normal   = glm::vec3(rotateMat * glm::vec4(localVertices[i * 3 + j].second, 1.0f));
+		}
+	}
+}
 
 class StaticModel: public virtual Model {
 public:
@@ -382,7 +369,8 @@ class SimpleOctagon: public DynamicModel, public SizedObject {
 		triangles[7].setupNormal();
 		triangles[7].reverseNormal();
 
-		addNewRotationFront({{vertexLowerCone, vertexUpperCone}, 90.0f});
+		addNewRotationFront({-vertexLowerCone + vertexUpperCone, 90.0f});
+		prepareLocalVertices();
 	}
 public:
 	explicit SimpleOctagon(float size, glm::vec3 color = {1.0f, 1.0f, 1.0f}): Model(), DynamicModel(8), SizedObject(size){
@@ -434,7 +422,8 @@ class CoinModel: public DynamicModel, public SizedObject {
 
 			index++;			
 		}
-		addNewRotationFront({{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}}, 120.0f});
+		addNewRotationFront({ {0.0f, 1.0f, 0.0f}, 120.0f});
+		prepareLocalVertices();
 	};
 
 public:
@@ -543,7 +532,8 @@ class SimpleArrow: public DynamicModel, public SizedObject {
 		triangles[11].setupNormal();
 		triangles[11].reverseNormal();
 //=========================
-		addNewRotationFront({{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}, 90.0f});
+		addNewRotationFront({{0.0f, 0.0f, 1.0f}, 90.0f});
+		prepareLocalVertices();
 
 	}
 public:
@@ -559,9 +549,18 @@ const glm::vec3 EAST_NORM = {-1.0f, 0.0f, 0.0f};
 const glm::vec3 WEST_NORM = {1.0f, 0.0f, 0.0f};
 const glm::vec3 NORTH_NORM = {0.0f, 0.0f, -1.0f};
 const glm::vec3 SOUTH_NORM = {0.0f, 0.0f, 1.0f};
+
 const float zeroLevel = 10.0f;
 
-
+const glm::vec3 dirNormal(int dir){
+	switch(dir){
+		case 0: return SOUTH_NORM;
+		case 1: return EAST_NORM;
+		case 2: return NORTH_NORM;
+		case 3:	return WEST_NORM;
+	}
+	return VERTICAL_NORM;
+}
 
 
 class Field: public StaticModel, public MazeGame::CellField{
@@ -926,6 +925,7 @@ class Field: public StaticModel, public MazeGame::CellField{
 
 
 			}
+		prepareLocalVertices();
 
 	};
 

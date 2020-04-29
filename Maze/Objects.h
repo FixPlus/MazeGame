@@ -204,7 +204,7 @@ public:
 class DirectedObject: public virtual ModeledObject {
 	float progress = 0.0f;
 	bool clockwise = true;
-	float rotSpeed = 720.0f;
+	float rotSpeed = 500.0f;
 	int nDir = 2;
 	int delta = 0;
 protected:
@@ -233,8 +233,11 @@ public:
 			progress += dt * rotSpeed;
 			rotate({0.0f, 1.0f, 0.0f}, - dt * rotSpeed * (clockwise ? 1.0f : -1.0f));
 			if(progress > 90.0f * (delta)){
+				progress - 90.0f * delta;
+				rotate({0.0f, 1.0f, 0.0f}, (progress - 90.0f * delta) * (clockwise ? 1.0f : -1.0f));
 				onChangingDirection = false;
 				dir = nDir;
+			//	faceOnAxis(dirNormal(dir));
 				progress = 0.0f;
 			}
 
