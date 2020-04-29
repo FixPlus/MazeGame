@@ -35,6 +35,33 @@ Cell* GameObject::getCell(){
 	return gameCore->getCell(static_cast<int>(round(x)), static_cast<int>(round(y)));
 }
 
+
+class HealthObject: public virtual GameObject {
+	float max_hp_;
+	float hp_;
+public:
+	explicit HealthObject(float max_hp = 100.0f): max_hp_(max_hp), hp_(max_hp){};
+
+	void modifyHP(float count){
+		hp_ += count;
+		if(hp_ > max_hp_)
+			hp_ = max_hp_;
+
+		if(hp_ <= 0.0f + __FLT_EPSILON__){
+			hp_ = 0.0f;
+			expired = true;
+		}
+	}
+
+	float const& hp() const{
+		return hp_;
+	}
+	float max_hp() const{
+		return max_hp_;
+	}
+};
+
+
 class DynamicObject: public virtual GameObject {
 	bool moving = false;
 	int xFrom, yFrom, xDest, yDest;
@@ -175,21 +202,50 @@ public:
 };
 
 class DirectedObject: public virtual ModeledObject {
+	float progress = 0.0f;
+	bool clockwise = true;
+	float rotSpeed = 720.0f;
+	int nDir = 2;
+	int delta = 0;
 protected:
+	bool onChangingDirection = false;
 	int dir = 2;
 public:
 	explicit DirectedObject(int idir = 2): dir(idir) { };
 
 	void changeDirection(int newDir){
+		if(onChangingDirection)
+			return;
+
 		int div = newDir % 4 - dir;
-		rotate({0.0f, 1.0f, 0.0f}, -div * 90.0f);
-		dir = newDir % 4;
+		if(div == 0)
+			return;
+		//rotate({0.0f, 1.0f, 0.0f}, -div * 90.0f);
+		clockwise = div > 0 && div < 2 || div == -3;
+		delta = (abs(div) == 2) ? 2 : 1;
+		nDir = newDir % 4;
+		onChangingDirection = true;
 	};
 
+	void update(float dt) override{
+		ModeledObject::update(dt);
+		if(onChangingDirection){
+			progress += dt * rotSpeed;
+			rotate({0.0f, 1.0f, 0.0f}, - dt * rotSpeed * (clockwise ? 1.0f : -1.0f));
+			if(progress > 90.0f * (delta)){
+				onChangingDirection = false;
+				dir = nDir;
+				progress = 0.0f;
+			}
 
+		}
+	}
 
+	bool isChangingDirection() const{
+		return onChangingDirection;
+	}
 
-	int getDir(){
+	int const& getDir() const{
 		return dir;
 	}
 
@@ -216,11 +272,16 @@ public:
 
 	}
 
+	void update(float dt) override{
+		DirectedObject::update(dt);
+		DynamicModeledObject::update(dt);
+	}
 	bool canMove(Cell const* from, Cell const* into) override{
 		return (into && into->type == CellType::PATH && !GameCore::isThereObjectsInCell(into, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
 	}
 
 	void moveInDirection(){
+		if(!onChangingDirection)
 		moveObj(dir * 2);
 	};
 
@@ -281,34 +342,6 @@ public:
 
 
 
-template <typename AnyDynamicModel>
-class PlayerObject: public DynamicDirectedObject, public AnyDynamicModel {
-public:
-	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ };
-
-	ObjectInfo getInfo() const override{
-		return {ObjectType::PLAYER, 0};
-	};
-
-	void interact(GameObject* another) override{
-		ObjectInfo info = another->getInfo();
-		switch(info.type){
-			case ObjectType::COIN: {
-				speed += 0.2f;
-				break;
-			}
-			case ObjectType::NPC: {
-/*			speed -= 0.2f;
-				if(speed < 0.2f)
-					speed = 0.2f;
-*/
-				break;
-			}
-		}
-	};
-
-};
 
 
 
@@ -449,6 +482,7 @@ class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
 	float next_state_time = 1.0;
 	int id;
 	static int next_id;
+	std::list<std::function<void(void)>> actions;
 	enum CannonState {CS_FIRING, CS_GATHERING, CS_IDLE} state = CS_FIRING;
 
 	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
@@ -462,17 +496,22 @@ public:
 
 	void update(float dt) override{
 		DynamicDirectedObject::update(dt);
+		if(!isMoving() && !isChangingDirection() && !actions.empty()){
+			(*actions.begin())();
+			actions.pop_front();
+		}
+
 		switch(state){
 			case CS_FIRING:{
 				launch_timer += dt;
 				if(launch_timer > 1.0 / fire_rate){
-					gameCore->addNewGameObject(new Bullet<SimpleOctagon>{parent, 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});
+					actions.push_back([this](){gameCore->addNewGameObject(new Bullet<SimpleOctagon>{parent, 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});});
 					launch_timer = 0.0;
 				}
 				break;
 			}
 			case CS_GATHERING:{
-				if(isMoving())
+				if(isMoving() || isChangingDirection())
 					break;
 				bool prob_dirs[4] = {false};
 				int count_dirs = 0;
@@ -507,8 +546,8 @@ public:
 						next_dir--;
 				}
 				i--;
-				changeDirection(i);
-				moveInDirection();
+				actions.push_back([this, i](){changeDirection(i);});
+				actions.push_back([this](){moveInDirection();});
 				break;
 			}
 			case CS_IDLE:{

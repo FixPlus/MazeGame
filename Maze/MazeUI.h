@@ -36,6 +36,7 @@ class UIElement {
 
 public:
 	bool expired = false;
+	bool visible = true;
 	virtual bool update(int width, int height) = 0;
 
 	virtual ~UIElement() {};
@@ -251,7 +252,8 @@ public:
 		bool ret = false;
 
 		for(auto& element: elements)
-			ret = ret || element->update(width, height);
+			if(element->visible)
+				ret = ret || element->update(width, height);
 		
 
 		ImGui::Render();
@@ -266,11 +268,12 @@ public:
 		return ret;
 	}
 
-	void addNewElement(UIElement* elem){
+	UIElement* addNewElement(UIElement* elem){
 		
 		elements.push_back(elem);
 
 		//TODO: add exception on NULL argument
+		return elem;
 	}
 
 	void clear() {

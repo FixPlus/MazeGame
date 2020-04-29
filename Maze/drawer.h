@@ -70,6 +70,14 @@ public:
 	void moveCamera(glm::vec3 newPos){
 		cameraPos = newPos;
 	}
+
+	void setCameraAxis(glm::vec3 axis){
+		axis = glm::normalize(axis);
+		rotation.x = (acos(glm::dot(axis, glm::vec3{0.0f,-1.0f, 0.0f})) * 720.0f / 3.141592f) - 120.0f;
+		glm::vec3 axis_proj = {axis.x, 0.0f, axis.z};
+		axis_proj = glm::normalize(axis_proj);
+		rotation.y = (acos(glm::dot(axis_proj, glm::vec3{0.0f, 0.0f, 1.0f}))* 720.0f / 3.141592f * (glm::dot(axis_proj, glm::vec3{1.0f, 0.0f, 0.0f}) > 0.0f ? 1.0f : -1.0f)  );
+	}
 	
 	void OnUpdateUIOverlay(vks::UIOverlay *overlay)
 	{
