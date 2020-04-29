@@ -58,10 +58,12 @@ class PlayerObject: public DynamicDirectedObject, public HealthObject, public An
 public:
 	bool onMove = false;
 	bool onRotate = false;
+	bool onFiring = false;
+
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(1000.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ };
+	GameObject(par), Model(), HealthObject(1000.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ rotSpeed = 400.0f; };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -72,6 +74,9 @@ public:
 			moveInDirection();
 		if(onRotate)
 			changeDirection(dir + nextDir);
+
+		if(!isChangingDirection() && onFiring)
+			gameCore->addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
 
 		DynamicDirectedObject::update(dt);
 	}
@@ -258,7 +263,7 @@ void GameManager::setupLevelScene(){
 				player->nextDir = 1;
 				break;
 			case KEY_R:
-				addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(player->getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
+				player->onFiring = true;
 				break;
 			case KEY_P:
 				debugWindow->visible = !debugWindow->visible;
@@ -289,6 +294,7 @@ void GameManager::setupLevelScene(){
 				//player->changeDirection(player->getDir() + 1);
 				break;
 			case KEY_R:
+				player->onFiring = false;
 				//addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(player->getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, player->getDir(), 0));
 				break;
 			case KEY_P:

@@ -204,13 +204,13 @@ public:
 class DirectedObject: public virtual ModeledObject {
 	float progress = 0.0f;
 	bool clockwise = true;
-	float rotSpeed = 500.0f;
 	int nDir = 2;
 	int delta = 0;
 protected:
 	bool onChangingDirection = false;
 	int dir = 2;
 public:
+	float rotSpeed = 500.0f;
 	explicit DirectedObject(int idir = 2): dir(idir) { };
 
 	void changeDirection(int newDir){
@@ -549,7 +549,9 @@ public:
 						next_dir--;
 				}
 				i--;
-				actions.push_back([this, i](){changeDirection(i);});
+				if(i != dir)
+					actions.push_back([this, i](){changeDirection(i);});
+				
 				actions.push_back([this](){moveInDirection();});
 				break;
 			}
