@@ -956,7 +956,7 @@ void VulkanExampleBase::handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 			} 
 			break;
 		case KEY_ESCAPE:
-			PostQuitMessage(0);
+			//PostQuitMessage(0);
 			break;
 		}
 
@@ -1411,7 +1411,7 @@ void VulkanExampleBase::keyboardKey(struct wl_keyboard *keyboard,
 			settings.overlay = !settings.overlay;
 		break;
 	case KEY_ESC:
-		quit = true;
+		//quit = true;
 		break;
 	}
 
@@ -1805,7 +1805,7 @@ void VulkanExampleBase::handleEvent(const xcb_generic_event_t *event)
 				camera.keys.right = false;
 				break;			
 			case KEY_ESCAPE:
-				quit = true;
+				//quit = true;
 				break;
 		}
 		keyPressed(keyEvent->detail);

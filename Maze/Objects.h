@@ -448,7 +448,7 @@ public:
 	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), id(iid){ transparent_ = true; setInPosition(); };
 
 	ObjectInfo getInfo() const override{
-		return {ObjectType::POWERUP, id};
+		return {ObjectType::BULLET, id};
 	};
 	bool canMove(Cell const* from, Cell const* into) override{
 		return (into);
@@ -485,9 +485,9 @@ public:
 */
 				break;
 			}
-			case ObjectType::POWERUP:{
-				return;
-			}
+			//case ObjectType::POWERUP:{
+			//	return;
+			//}
 			default: return;
 		}
 		expired = true;
@@ -594,7 +594,7 @@ public:
 			//	expired = true;
 				break;
 			}
-			case ObjectType::POWERUP: {
+			case ObjectType::BULLET: {
 				if(info.data != id)
 					expired = true;
 /*			speed -= 0.2f;

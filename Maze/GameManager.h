@@ -123,7 +123,7 @@ public:
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(1000.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ rotSpeed = 400.0f; };
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ rotSpeed = 400.0f; };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -148,7 +148,7 @@ public:
 				//speed += 0.2f;
 				break;
 			}
-			case ObjectType::POWERUP: {
+			case ObjectType::BULLET: {
 				if(info.data != 0)
 					modifyHP(-5.0f);
 				break;
@@ -265,7 +265,7 @@ void GameManager::setupLevelScene(){
 		addNewGameObject(new Cannon<SimpleArrow>{init, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
 	}
 */
-	
+
 	//This task will spawn 2 Powerup objects on free path cells every second during 20 seconds lifetime 
 	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 2, [](Cell* par)->GameObject*{ return new Powerup<CoinModel>(par);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
@@ -281,7 +281,7 @@ void GameManager::setupLevelScene(){
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
 
 	MazeUI::manager.clear();
-	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.7f, 0.2f, 0.3f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.85f, 0.2f, 0.15f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	statWindow->addNewItem(new MazeUI::StatText<float>(player->hp(), "HP"));
 
 
@@ -342,7 +342,10 @@ void GameManager::setupLevelScene(){
 //				paused = !paused;
 				break;
 			case KEY_F1:
-				break;				
+				break;	
+			case KEY_ESCAPE:
+				paused = !paused;
+				break;			
 		}
 	};
 	inputHandler.onKeyUp = [this, hintWindow](unsigned char key){ 		

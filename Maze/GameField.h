@@ -26,7 +26,7 @@ enum class CellType {PATH, WALL, ERR, ANY};
 
 enum class Dirs {UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT};
 
-enum class ObjectType{PLAYER, NPC, COIN, POWERUP, UNKNOWN};
+enum class ObjectType{PLAYER, NPC, COIN, POWERUP, BULLET, UNKNOWN};
 
 struct ObjectInfo{
 	enum ObjectType type;
