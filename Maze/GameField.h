@@ -226,11 +226,11 @@ public:
 
 
 
-	Cell* getRandomCell(enum CellType type){
+	Cell* getRandomCell(std::function<bool(Cell*)> rule = [](Cell*){ return true;}){
 		while(true){
 			int index = rand() % cells.size();
 			Cell* ret = &cells[index];
-			if(ret->type == type || type == CellType::ANY)
+			if(rule(ret))
 				return ret; 
 		}
 		return nullptr;
@@ -279,14 +279,14 @@ public:
 		//int obstacle_rate = width * obstacles / 20;
 
 		for(int i = 0; i < obst_count; i++){
-			Cell* cell = getRandomCell(CellType::PATH);
+			Cell* cell = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 			cell->type = CellType::WALL;	
 		}
 	}
 	
 	void generateRandomMaze(int straightness = 5, float cycleness = 1.0){
 		clear();
-		Cell* cell = getRandomCell(CellType::ANY);
+		Cell* cell = getRandomCell();
 
 		cell->type = CellType::PATH;
 		int prevDir = -1;
@@ -331,7 +331,7 @@ public:
 		for(int i = 0; i < cycles; i++){
 			int attemptsPassed = 0;
 			do{
-				cell = getRandomCell(CellType::WALL);
+				cell = getRandomCell([](Cell* c){ return c->type == CellType::WALL;});
 				attemptsPassed++;
 			}while(!isStraightWall(cell) && attemptsPassed < 1000);
 			
@@ -442,7 +442,7 @@ public:
 
 
 Cell* CellField::getRandomNewNodeCell(){
-	Cell* cur = getRandomCell(CellType::PATH);
+	Cell* cur = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 	std::list<Cell*> frontier;
 	std::unordered_map<Cell*, bool> visited;
 

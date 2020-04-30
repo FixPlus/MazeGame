@@ -290,6 +290,35 @@ public:
 
 };
 
+struct Peakable: public virtual GameObject{
+	void interact(GameObject* another) override{
+		ObjectInfo info = another->getInfo();
+		switch(info.type){
+			case ObjectType::PLAYER: {
+				expired = true;
+				break;
+			}
+		}
+	};	
+};
+
+
+// OBJECTS GROOPS
+
+template<typename AnyDynamicModel>
+class Powerup: public ModeledObject, public Peakable,  public AnyDynamicModel{
+public:
+	int id = 0;
+
+	explicit Powerup(Cell* par = nullptr, float size = 5.0f, glm::vec3 color = {0.0f, 0.5f, 1.0f}): 
+	Model(), GameObject(par), AnyDynamicModel(size, color), ModeledObject(){ transparent_ = true; setInPosition();};
+
+	ObjectInfo getInfo() const override{
+		return {ObjectType::POWERUP, id};
+	};
+
+};
+
 
 
 
@@ -309,11 +338,11 @@ public:
 	Model(), GameObject(par), DynamicModeledObject(ispeed), DynamicLodableModel(filename, scale){ setInPosition();};
 };
 
-class CoinObject: public ModeledObject, public CoinModel {
+class CoinObject: public ModeledObject, public Peakable, public CoinModel {
 	int nominal = 10;
 public:
 	static int count;
-	explicit CoinObject(Cell* par, float size = 5.0f): 
+	explicit CoinObject(Cell* par = nullptr, float size = 5.0f): 
 	Model(), GameObject(par), CoinModel(size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
 
 	void printObjectInfo() const override{
@@ -323,16 +352,6 @@ public:
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::COIN, nominal};
-	};
-
-	void interact(GameObject* another) override{
-		ObjectInfo info = another->getInfo();
-		switch(info.type){
-			case ObjectType::PLAYER: {
-				expired = true;
-				break;
-			}
-		}
 	};
 
 	~CoinObject(){

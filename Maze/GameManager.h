@@ -52,9 +52,69 @@ public:
 
 };
 
+class ObjectSpawner{
+public:
+	class SpawnInfo{
+		float period, timer = 0.0f;
+		int genCount = 0;
+		int amount;
+		std::function<bool(Cell*)> cellRule;
+		std::function<GameObject*(Cell*)> objConstruct;
+
+		float lifeTime = -1.0f;
+		bool expired = false;
+	public:
+		SpawnInfo(float per = 1.0f, int amnt = 1,
+				std::function<GameObject*(Cell*)> objCons = [](Cell*)->GameObject*{ return nullptr;}, 
+				std::function<bool(Cell*)> cRule = [](Cell*){ return true;}, float lt = -1.0f): lifeTime(lt), period(per), cellRule(cRule), objConstruct(objCons), amount(amnt) { };
+		void execute(float dt){
+			timer += dt;
+			if(timer > period * (genCount + 1)){
+				++genCount;
+				for(int i = 0; i < amount; ++i){
+					
+
+					GameObject* obj = objConstruct(gameCore->getRandomCell(cellRule)); 
+					// may return nullptr if GameObject cant be spawned under some circumstances written inside lambda 
+					// This is the legal way to limit the spawn of objects to avoid exceptional situation 
+
+
+					if(obj != nullptr)
+						gameCore->addNewGameObject(obj);
+				}
+			}
+			if(lifeTime > 0.0f && timer > lifeTime)
+				expired = true;
+		}
+
+		bool isExpired() const{
+			return expired;
+		}
+	};
+private:
+	std::list<SpawnInfo> spawnTasks;
+public:
+	void update(float dt){
+		for(auto it = spawnTasks.begin(); it != spawnTasks.end();){
+			(*it).execute(dt);
+			if((*it).isExpired())
+				it = spawnTasks.erase(it);
+			else
+				++it;
+		}
+	};
+
+	void addNewSpawnTask(SpawnInfo&& spnInfo){
+		spawnTasks.emplace_back(spnInfo);
+	}
+
+	void clear(){
+		spawnTasks.clear();
+	}
+};
 
 template <typename AnyDynamicModel>
-class PlayerObject: public DynamicDirectedObject, public HealthObject, public AnyDynamicModel {
+class PlayerObject: public DynamicDirectedObject, public HealthObject, public AnyDynamicModel { //TODO: move class declaration to Objects.h, leave only methods realisation here
 public:
 	bool onMove = false;
 	bool onRotate = false;
@@ -85,7 +145,7 @@ public:
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
 			case ObjectType::COIN: {
-				speed += 0.2f;
+				//speed += 0.2f;
 				break;
 			}
 			case ObjectType::POWERUP: {
@@ -107,6 +167,7 @@ public:
 class GameManager: public GameCore{
 	CameraKeeper camKeep;
 	PlayerObject<SimpleArrow>* player; // this is NOT owning pointer
+	ObjectSpawner spawner;
 public:
 	int setup = 0;
 	bool paused = false;
@@ -140,6 +201,7 @@ public:
 		}
 		setup = 0;
 		if(!paused){
+			spawner.update(dt);
 			GameCore::update(dt);
 			camKeep.holdCamera();
 		}
@@ -175,7 +237,7 @@ void GameManager::setupLevelScene(){
 	generateRandomMaze();
 	recreate();
 
-	Cell* init = getRandomCell(MazeGame::CellType::PATH);
+	Cell* init = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 
 	player = dynamic_cast<PlayerObject<SimpleArrow>*>(addNewGameObject(new PlayerObject<SimpleArrow>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
 
@@ -191,22 +253,32 @@ void GameManager::setupLevelScene(){
 
 
 
-
+/*
 	for(int i = 0; i < 250; i++){
-		do{
-			init = getRandomCell(MazeGame::CellType::PATH);
-		}while(isThereObjectsInCell(init));
+		auto freePathRule = [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);};
+		init = getRandomCell(freePathRule);
 
-		addNewGameObject(new MazeGame::CoinObject{init, 5.0f});
+		addNewGameObject(new CoinObject{init, 5.0f});
 
-		do{
-			init = getRandomCell(MazeGame::CellType::PATH);
-		}while(isThereObjectsInCell(init));
+		init = getRandomCell(freePathRule);
 		
-		addNewGameObject(new MazeGame::Cannon<SimpleArrow>{init, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
+		addNewGameObject(new Cannon<SimpleArrow>{init, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
 	}
+*/
+	
+	//This task will spawn 2 Powerup objects on free path cells every second during 20 seconds lifetime 
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 2, [](Cell* par)->GameObject*{ return new Powerup<CoinModel>(par);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
 
 
+	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new Cannon<SimpleArrow>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
+
+
+	//This task will spawn 5 Coin objects on free path cells every second during 60 seconds lifetime 	
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new CoinObject(par);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
 
 	MazeUI::manager.clear();
 	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.7f, 0.2f, 0.3f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
