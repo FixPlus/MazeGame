@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <fcntl.h>
 #include <io.h>
-#include <ShellScalingAPI.h>
+#include "ShellScalingAPI.h"
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 #include <android/native_activity.h>
 #include <android/asset_manager.h>
@@ -53,6 +53,9 @@
 #include "VulkanSwapChain.hpp"
 #include "camera.hpp"
 #include "benchmark.hpp"
+#include "UserInputMessage.h"
+
+using UIFunc = std::function<void(UserInputMessage)>;
 
 class VulkanExampleBase
 {
@@ -124,6 +127,8 @@ protected:
 		VkSemaphore renderComplete;
 	} semaphores;
 	std::vector<VkFence> waitFences;
+
+	UIFunc user_input;
 public: 
 	bool prepared = false;
 	uint32_t width = 1280;
@@ -207,6 +212,7 @@ public:
 #if defined(_WIN32)
 	HWND window;
 	HINSTANCE windowInstance;
+	bool quit = false;
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// true if application has focused, false if moved to background
 	bool focused = false;

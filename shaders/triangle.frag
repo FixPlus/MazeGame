@@ -41,7 +41,7 @@ void main()
 	  
 	//  if(dot(inNormal, -norm_trace) < 0)
 	//  	specular *= 0;
-	  outFragColor = vec4(vec3(color.r * inColor.r, color.g * inColor.g, color.b * inColor.b) * (enlighted * 0.7 + 0.1), color.a);
+	  outFragColor = vec4(vec3(color.r * inColor.r, color.g * inColor.g, color.b * inColor.b) * (enlighted * 0.9 + 0.1), color.a);
 
 	  //outFragColor = vec4(specular, 1.0);
 	}

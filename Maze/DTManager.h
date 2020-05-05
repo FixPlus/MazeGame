@@ -1,7 +1,7 @@
 #pragma once
 #include "DrawableTriangle.h"
 #include "drawer.h"
-
+#include <list>
 
 
 namespace triGraphic {

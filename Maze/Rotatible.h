@@ -2,7 +2,7 @@
 #include <cmath>
 
 namespace triGraphic {
-using Rotation = std::pair<std::pair<glm::vec3, glm::vec3>, float>; // <<point1, point2>, rotSpeed>
+using Rotation = std::pair<glm::vec3, float>; // < axis, rotSpeed>
 
 class Rotatible{
 protected:

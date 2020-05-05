@@ -247,7 +247,7 @@ for(int i = 0; i < NUMBER_OF_TEXTURES; i++){
 			// Clean up staging resources
 			vkFreeMemory(device, stagingMemory, nullptr);
 			vkDestroyBuffer(device, stagingBuffer, nullptr);
-			std::cout << "Texture[" << i << "].deviceMemory = " << reinterpret_cast<long>(texture[i].deviceMemory) << std::endl;
+//			std::cout << "Texture[" << i << "].deviceMemory = " << reinterpret_cast<long>(texture[i].deviceMemory) << std::endl;
 		} else {
 			// Copy data to a linear tiled image
 
@@ -814,7 +814,7 @@ void VulkanExample::render()
 void VulkanExample::mouseMoved(double x, double y, bool &handled){
 //		std::cout << mousePos.x << " " << x << std::endl;
 //		std::cout << mousePos.y << " " << y << std::endl;
-	glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians( - rotation.x * 0.25f), glm::vec3(1.0f, 0.0f, 0.0f));
+/*	glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians( - rotation.x * 0.25f), glm::vec3(1.0f, 0.0f, 0.0f));
 	rotateMat = glm::rotate(rotateMat, glm::radians( - rotation.y * 0.25f), glm::vec3(0.0f, 1.0f, 0.0f));
 	rotateMat = glm::rotate(rotateMat, glm::radians( - rotation.z * 0.25f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::vec4 dir =glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -835,6 +835,7 @@ void VulkanExample::mouseMoved(double x, double y, bool &handled){
 	dir = dir * rotateMat;
 
 	cameraPos += glm::vec3(dir);
+*/
 }
 
 void VulkanExample::moveCameraForward(float distance){

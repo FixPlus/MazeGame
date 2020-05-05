@@ -479,4 +479,4 @@ Maze/Maze.o: Maze/Maze.cpp Maze/drawer.h \
  external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
  external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp \
  Maze/DrawableTriangle.h Maze/GameField.h Maze/Models.h Maze/Objects.h Maze/DTManager.h \
- Maze/MazeUI.h
+ Maze/MazeUI.h Maze/GameManager.h
