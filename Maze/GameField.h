@@ -19,11 +19,14 @@
 */
 
 
+namespace MazeGame{
+
+
 enum class CellType {PATH, WALL, ERR, ANY};
 
 enum class Dirs {UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT};
 
-enum class ObjectType{PLAYER, NPC, COIN, POWERUP, UNKNOWN};
+enum class ObjectType{PLAYER, NPC, COIN, POWERUP, BULLET, UNKNOWN};
 
 struct ObjectInfo{
 	enum ObjectType type;
@@ -59,59 +62,13 @@ struct Cell {
 	virtual ~Cell(){};
 };
 
-class CellField;
 
 
-class GameObject {
-protected:
-	Cell* parent;
-	bool transparent_ = false;
-	bool expired = false;
-public:	
-	float x, y;
+extern bool should_update_static_vertices;
 
-	Cell* getCell();
-	Cell* getParent(){
-		return parent;
-	}
-
-	explicit GameObject(float ix = 0, float iy = 0):
-	 x(ix), y(iy){ parent = getCell(); getCell()->addNewObject(this);};
-
-
-	bool isExpired() const{
-		return expired;
-	}
-
-
-	bool isTransparent() const{
-		return transparent_;
-	};
-
-	virtual void update(float dt) = 0;
-
-	virtual void printObjectInfo() const{
-	};
-
-	virtual ObjectInfo getInfo() const{
-		return {ObjectType::UNKNOWN, 0};
-	};
-
-	virtual void interact(GameObject* another){
-
-	};
-
-	virtual ~GameObject(){
-		parent->removeObject(this);
-	};
-};
-
-
-
-class CellField {
+class CellField{
 	
 	std::vector<Cell> cells;
-	std::list<GameObject*> objects;
 	int width, height;
 	bool isOutOfbounds(int x, int y) const{
 		return x < 0 || x >= width || y < 0 || y >= height;
@@ -180,26 +137,14 @@ public:
 			}
 	};
 
-	void update(float dt) {
-		for(auto& object: objects){
-			if(object != nullptr){
-				object->update(dt);
-
-			for(auto& nei: object->getCell()->objects)
-				if(nei != object && object->getParent() == nei->getParent()) 
-					object->interact(nei);
-			
-
-			}
+	CellField& operator=(CellField&& another){
+		if(&another != this){
+			cells = another.cells;
+			another.cells.clear();
+			width = another.width;
+			height = another.height;
 		}
-
-		for(auto& object: objects)
-			if(object->isExpired()){
-				delete object;
-				object = nullptr;
-			}
-			
-		objects.remove_if([](GameObject* const& obj) -> bool { return obj == nullptr; });
+		return *this;
 	}
 
 	Cell* getCell(int x, int y){
@@ -211,19 +156,17 @@ public:
 		return &cells[y * width + x];
 	}
 
-	GameObject* addNewGameObject(GameObject* object){
-		objects.push_back(object);
-
-		return objects.back();
-	}
 
 	void setType(int x, int y, CellType type){
-		if(isOutOfbounds(x, y))
+		if(isOutOfbounds(x, y) || (x == 0 || x == width - 1) || (y == 0 || y == height - 1))
 			return;
 
 		int index = y * width + x;
 
 		cells[index].type = type;
+
+		MazeGame::should_update_static_vertices = true;
+
 	};
 
 	void clear(CellType type = CellType::WALL){
@@ -258,29 +201,21 @@ public:
 
 	}
 
-	bool isThereObjectsInCell(int x, int y, std::function<bool(const GameObject*)> rule = [](const GameObject* obj) -> bool{ return true; }) const{
-		Cell const* cell = getCell(x, y);
-		for(auto object: cell->objects)
-			if(rule(object))
-				return true;
-
-		return false;
-	}
 
 	// up right down left
-	std::vector<bool> openSideFaces(int x, int y){
+	std::vector<bool> openSideFaces(int x, int y) const{
 		std::vector<bool> ret;
 		if(isOutOfbounds(x, y))
 			return ret;
 
 		ret.resize(4, false);
 		
-		Cell* cur = &cells[y * width + x];
+		Cell const* cur = &cells[y * width + x];
 		if(cur->type == CellType::PATH)
 			return ret;
 
 		for(int i = 0; i < 8; i += 2){
-			Cell* nei = getNeiCell(cur, static_cast<enum Dirs>(i));
+			Cell const* nei = getNeiCell(cur, static_cast<enum Dirs>(i));
 			if(nei && nei->type == CellType::PATH){
 				ret[i / 2] = true;
 			}
@@ -291,11 +226,11 @@ public:
 
 
 
-	Cell* getRandomCell(enum CellType type){
+	Cell* getRandomCell(std::function<bool(Cell*)> rule = [](Cell*){ return true;}){
 		while(true){
 			int index = rand() % cells.size();
 			Cell* ret = &cells[index];
-			if(ret->type == type || type == CellType::ANY)
+			if(rule(ret))
 				return ret; 
 		}
 		return nullptr;
@@ -344,14 +279,14 @@ public:
 		//int obstacle_rate = width * obstacles / 20;
 
 		for(int i = 0; i < obst_count; i++){
-			Cell* cell = getRandomCell(CellType::PATH);
+			Cell* cell = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 			cell->type = CellType::WALL;	
 		}
 	}
 	
 	void generateRandomMaze(int straightness = 5, float cycleness = 1.0){
 		clear();
-		Cell* cell = getRandomCell(CellType::ANY);
+		Cell* cell = getRandomCell();
 
 		cell->type = CellType::PATH;
 		int prevDir = -1;
@@ -396,7 +331,7 @@ public:
 		for(int i = 0; i < cycles; i++){
 			int attemptsPassed = 0;
 			do{
-				cell = getRandomCell(CellType::WALL);
+				cell = getRandomCell([](Cell* c){ return c->type == CellType::WALL;});
 				attemptsPassed++;
 			}while(!isStraightWall(cell) && attemptsPassed < 1000);
 			
@@ -481,31 +416,33 @@ public:
 		return height;
 	}
 
-	void freeGameObjects(){
-		for(auto& object: objects){
-			if(object != nullptr){
-				delete object;
-				object = nullptr;
+
+	int polysRequested() const{
+		int count = 0;
+		for(int x = 0; x < getWidth(); x++)
+			for(int y = 0; y < getHeight(); y++){
+				count++;
+				std::vector<bool> sides= openSideFaces(x,y);
+				for(auto side: sides)
+					if(side)
+						count++;
 			}
-		}		
+		return count * 2;
 	}
+
+
 	virtual ~CellField(){
 	};
 };
 
-namespace MazeGame{
 
-extern CellField  gameField;
 
-};
 
-Cell* GameObject::getCell(){
-	return MazeGame::gameField.getCell(static_cast<int>(round(x)), static_cast<int>(round(y)));
-}
+
 
 
 Cell* CellField::getRandomNewNodeCell(){
-	Cell* cur = getRandomCell(CellType::PATH);
+	Cell* cur = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 	std::list<Cell*> frontier;
 	std::unordered_map<Cell*, bool> visited;
 
@@ -540,95 +477,4 @@ Cell* CellField::getRandomNewNodeCell(){
 
 
 
-//GAME OBJECTS
-
-
-class DynamicObject: public virtual GameObject {
-	bool moving = false;
-	int xFrom, yFrom, xDest, yDest;
-protected:
-	Cell* destination = NULL;
-	float progression = 0.0f;
-public:
-	float speed = 1.0f;
-
-	explicit DynamicObject(int ispeed = 1.0f): speed(ispeed){};
-
-
-	virtual bool canMove(Cell const* from, Cell const* into) = 0;
-
-	void moveObj(int dir){
-		if(moving)
-			return;
-		Cell* dest = MazeGame::gameField.getNeiCell(getCell(), static_cast<enum Dirs>(dir));
-		if(dest == nullptr)
-			return;
-	
-
-		if(canMove(getCell(), dest)){
-			destination = dest;
-			destination->addNewObject(this);
-
-			xFrom = getCell()->x;
-			yFrom = getCell()->y;
-
-			xDest = destination->x;
-			yDest = destination->y;
-
-
-			progression = 0.0f;
-			moving = true;
-		}
-	};
-	void moveObj(int x, int y){
-		if(moving)
-			return;
-
-		Cell* dest = MazeGame::gameField.getCell(x, y);
-
-		if(dest == nullptr)
-			return;
-
-		if(canMove(getCell(), dest)){
-			destination = dest;
-			destination->addNewObject(this);
-
-			xFrom = getCell()->x;
-			yFrom = getCell()->y;
-
-			xDest = destination->x;
-			yDest = destination->y;
-
-			progression = 0.0f;
-			moving = true;
-		}
-
-	};
-
-	void update(float dt) override{
-		if(moving){
-			progression += dt * speed;
-			
-			x = static_cast<float>(xFrom) * (1.0f - progression) + static_cast<float>(xDest) * progression;
-			y = static_cast<float>(yFrom) * (1.0f - progression) + static_cast<float>(yDest) * progression;
-			if(progression >= 1.0f){
-				parent->removeObject(this);
-				parent = destination;
-
-				x = destination->x;
-				y = destination->y;
-				moving = false;
-				progression -= 1.0f;
-			}
-		}
-	}
-	
-	bool isMoving(){
-		return moving;
-	}
-
-	~DynamicObject(){
-		if(destination != nullptr && destination != parent)
-			destination->removeObject(this);
-	}
 };
