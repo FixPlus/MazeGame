@@ -26,6 +26,7 @@
 #include "VulkanBuffer.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanModel.hpp"
+#include "InstanceData.h"
 
 #define VERTEX_BUFFER_BIND_ID 0
 #define INSTANCE_BUFFER_BIND_ID 1
@@ -48,35 +49,7 @@ public:
 	// Note that this repository contains a texture class (VulkanTexture.hpp) that encapsulates texture loading functionality in a class that is used in subsequent demos
 
 	// Per-instance data block
-	struct InstanceData {
-		glm::vec3 pos = {0.0f, 0.0f, 0.0f};
-		glm::vec3 rot = {0.0f, 0.0f, 0.0f};
-		float scale = 1.0f;
-//		uint32_t texIndex;
-	};
-
 	bool shouldRecreateInstances = false;
-
-	struct InstanceBuffer {
-		VkBuffer buffer = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
-		size_t size = 0;
-		VkDescriptorBufferInfo descriptor;
-	};
-
-	class InstanceView {
-		InstanceData* instance_;
-	public:
-		InstanceView(InstanceData* inst = nullptr): instance_(inst){}
-		void reset(InstanceData* newInstance = nullptr) {
-			instance_ = newInstance;
-		}
-
-		InstanceData* instance() const{
-			return instance_;
-		};
-
-	};
 
 	struct Model{
 		
@@ -123,7 +96,7 @@ public:
 	struct UBOVS {
 		glm::mat4 projectionMatrix;
 		glm::vec4 viewPos;
-		glm::vec4 lightDirection = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
+		glm::vec4 lightDirection = glm::vec4(0.7f, 2.0f, 1.2f, 0.0f);
 	} uboVS;
 
 	struct {
@@ -216,7 +189,7 @@ public:
 			for(auto& model: models){
 				if(model.instances.empty())
 					continue;
-				
+
 				vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &model.descriptorSet, 0, NULL);
 				vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, model.pipeline);
 				vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &model.model.vertices.buffer, offsets);
@@ -235,10 +208,14 @@ public:
 		}
 	}
 
-	void loadAssets()
+	template<typename PairIt>
+	void loadAssets(PairIt begin, PairIt end)
 	{
-		models.push_back(Model{});
-		constructModel("Model", "Model", (*(models.end() - 1)));
+		while(begin != end){
+			models.push_back(Model{});
+			constructModel(begin->first, begin->second, (*(models.end() - 1)));
+			begin++;
+		}
 	}
 
 	void setupDescriptorPool()
@@ -566,12 +543,13 @@ public:
 		updateInstanceBuffers();
 	}
 
-	void prepare()
+	template<typename PairIt>
+	void prepare(PairIt begin, PairIt end)
 	{
 		std::cout << "Preparing Vulkan" << std::endl;
 		VulkanExampleBase::prepare();
 		std::cout << "Vk base prepared" << std::endl;
-		loadAssets();
+		loadAssets(begin, end);
 		std::cout << "Assets loaded" << std::endl;
 		prepareInstanceData();
 		std::cout << "Instance data prepared" << std::endl;
@@ -590,10 +568,21 @@ public:
 		prepared = true;
 	}
 
-	InstanceView const& addInstance(int model_id){
+
+	InstanceView const* addInstance(int model_id){
+
+
 		Model& model = models[model_id];
 		model.instances.emplace_back();
 		model.instanceViews.emplace_back(&(*(model.instances.end() - 1)));
+		
+		auto view_it = model.instanceViews.begin();
+		auto inst_it = model.instances.begin();
+		auto view_end = model.instanceViews.end();
+		
+		for(; view_it != view_end; view_it++, inst_it++)
+			(*view_it).reset(&(*inst_it));
+
 		model.instanceBuf.destroy();
 
 		model.instanceBuf.size = model.instances.size() * sizeof(InstanceData);
@@ -609,29 +598,36 @@ public:
 
 		shouldRecreateInstances = true;
 
-		return *(--model.instanceViews.end());
+
+		return &(*(--model.instanceViews.end()));
 	}
 
-	void returnInstance(InstanceView const& instance){
+	void returnInstance(InstanceView const* instance){
 		for(auto& model: models){
 			bool flag = false;
-			for(auto& view: model.instanceViews)
-				if(&view == &instance){
-					view.reset();
-					flag = true;
-					break;
+			auto view_it = model.instanceViews.begin();
+			auto inst_it = model.instances.begin();
+			while( inst_it != model.instances.end()){
+				if(!flag){
+					if(&(*view_it) == instance){
+						view_it = model.instanceViews.erase(view_it);
+						inst_it = model.instances.erase(inst_it);
+						flag = true;
+						continue;
+					}
+					else{
+						++view_it;
+						++inst_it;
+					}
 				}
-			if(flag){
-				model.instanceViews.remove_if([](InstanceView const& obj) -> bool { return obj.instance() == nullptr; });
-
-				model.instances.resize(model.instances.size() - 1);
-				auto view_it = model.instanceViews.begin();
-				auto inst_it = model.instances.begin();
-
-				for(; inst_it != model.instances.end(); view_it++, inst_it++)
+				else{
 					(*view_it).reset(&(*inst_it));
-				break;
+						++view_it;
+						++inst_it;					
+				}
 			}
+
+
 		}
 
 		shouldRecreateInstances = true;

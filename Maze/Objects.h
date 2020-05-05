@@ -157,7 +157,7 @@ public:
 class ModeledObject: public virtual GameObject, public virtual Model {
 protected:
 	void setInPosition(){
-		set({(x + 0.5f) * gameCore->getCellSize(), gameCore->getZeroLevel() - 5.0f,(y + 0.5f) * gameCore->getCellSize()});		
+		set({(x) * gameCore->getCellSize(), gameCore->getZeroLevel() - 5.0f,(y) * gameCore->getCellSize()});		
 	}
 public:
 	ModeledObject() {
@@ -311,7 +311,7 @@ public:
 	int id = 0;
 
 	explicit Powerup(Cell* par = nullptr, float size = 5.0f, glm::vec3 color = {0.0f, 0.5f, 1.0f}): 
-	Model(), GameObject(par), AnyDynamicModel(size, color), ModeledObject(){ transparent_ = true; setInPosition();};
+	Model(), GameObject(par), AnyDynamicModel(M_MODEL, size), ModeledObject(){ transparent_ = true; setInPosition();};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::POWERUP, id};
@@ -329,21 +329,12 @@ public:
 // INSTANCED OBJECTS DOWN THERE
 
 
-
-
-
-class LoadableDynamicModeledObject: public DynamicModeledObject, public DynamicLodableModel{
-public:
-	explicit LoadableDynamicModeledObject(std::string filename,  Cell* par, float ispeed = 1.0f, float scale = 1.0f):
-	Model(), GameObject(par), DynamicModeledObject(ispeed), DynamicLodableModel(filename, scale){ setInPosition();};
-};
-
-class CoinObject: public ModeledObject, public Peakable, public CoinModel {
+class CoinObject: public ModeledObject, public Peakable, public SingleInstanceModel {
 	int nominal = 10;
 public:
 	static int count;
 	explicit CoinObject(Cell* par = nullptr, float size = 5.0f): 
-	Model(), GameObject(par), CoinModel(size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
+	Model(), GameObject(par), SingleInstanceModel(M_MODEL, size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
 
 	void printObjectInfo() const override{
 		std::cout << "Coin" << std::endl;
@@ -360,13 +351,6 @@ public:
 };
 
 
-
-
-
-
-
-
-
 template <typename AnyDynamicModel>
 class Seeker: public DynamicModeledObject, public AnyDynamicModel{
 	GameObject* aim;
@@ -375,7 +359,7 @@ class Seeker: public DynamicModeledObject, public AnyDynamicModel{
 public:
 
 	explicit Seeker(Cell* par, float size = 5.0f, float ispeed = 1.0f, glm::vec3 color = {1.0f, 1.0f, 1.0f}, GameObject* iaim = NULL): 
-	GameObject(par), Model(), AnyDynamicModel(size, color), DynamicModeledObject(ispeed), aim(iaim){
+	GameObject(par), Model(), AnyDynamicModel(M_MODEL, size), DynamicModeledObject(ispeed), aim(iaim){
 		speed = ispeed;
 	};
 
@@ -445,7 +429,7 @@ class Bullet: public DynamicDirectedObject, public AnyDynamicModel{
 	int id;
 public:
 	explicit Bullet(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), id(iid){ transparent_ = true; setInPosition(); };
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_MODEL, size), id(iid){ transparent_ = true; setInPosition(); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::BULLET, id};
@@ -510,7 +494,7 @@ class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
 	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 public:
 	explicit Cannon(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color), fire_rate(fr) { setInPosition(); id = next_id++;};
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size), fire_rate(fr) { setInPosition(); id = next_id++;};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::NPC, id};
@@ -527,7 +511,7 @@ public:
 			case CS_FIRING:{
 				launch_timer += dt;
 				if(launch_timer > 1.0 / fire_rate){
-					actions.push_back([this](){gameCore->addNewGameObject(new Bullet<SimpleOctagon>{parent, 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});});
+					actions.push_back([this](){gameCore->addNewGameObject(new Bullet<SingleInstanceModel>{parent, 1.0f, {0.0f, 0.0f, 0.0f}, 10.0f, dir, id});});
 					launch_timer = 0.0;
 				}
 				break;
@@ -595,8 +579,9 @@ public:
 				break;
 			}
 			case ObjectType::BULLET: {
-				if(info.data != id)
+				if(info.data != id){
 					expired = true;
+				}
 /*			speed -= 0.2f;
 				if(speed < 0.2f)
 					speed = 0.2f;

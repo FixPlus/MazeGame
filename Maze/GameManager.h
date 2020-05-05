@@ -123,7 +123,7 @@ public:
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ rotSpeed = 400.0f; };
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size * 10.0f){ rotSpeed = 400.0f; };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -136,7 +136,7 @@ public:
 			changeDirection(dir + nextDir);
 
 		if(!isChangingDirection() && onFiring)
-			gameCore->addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
+			gameCore->addNewGameObject(new MazeGame::Bullet<SingleInstanceModel>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
 
 		DynamicDirectedObject::update(dt);
 	}
@@ -166,7 +166,7 @@ public:
 
 class GameManager: public GameCore{
 	CameraKeeper camKeep;
-	PlayerObject<SimpleArrow>* player; // this is NOT owning pointer
+	PlayerObject<SingleInstanceModel>* player; // this is NOT owning pointer
 	ObjectSpawner spawner;
 public:
 	int setup = 0;
@@ -239,7 +239,7 @@ void GameManager::setupLevelScene(){
 
 	Cell* init = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 
-	player = dynamic_cast<PlayerObject<SimpleArrow>*>(addNewGameObject(new PlayerObject<SimpleArrow>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
+	player = dynamic_cast<PlayerObject<SingleInstanceModel>*>(addNewGameObject(new PlayerObject<SingleInstanceModel>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
 
 	player->onDeath = [this](){
 		player = nullptr;
@@ -267,12 +267,12 @@ void GameManager::setupLevelScene(){
 */
 
 	//This task will spawn 2 Powerup objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 2, [](Cell* par)->GameObject*{ return new Powerup<CoinModel>(par);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 2, [](Cell* par)->GameObject*{ return new Powerup<SingleInstanceModel>(par);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
 
 
 	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new Cannon<SimpleArrow>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
 
 
