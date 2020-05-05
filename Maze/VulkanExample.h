@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <vector>
+#include <list>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -23,16 +24,19 @@
 #include "vulkanexamplebase.h"
 #include "VulkanDevice.hpp"
 #include "VulkanBuffer.hpp"
+#include "VulkanTexture.hpp"
+#include "VulkanModel.hpp"
 
 #define VERTEX_BUFFER_BIND_ID 0
+#define INSTANCE_BUFFER_BIND_ID 1
 #define ENABLE_VALIDATION false
 
 
 struct Vertex {
 	glm::vec3 position;
-	glm::vec3 uv;
-	glm::vec3 color;	
 	glm::vec3 normal;
+	glm::vec2 uv;
+	glm::vec3 color;	
 
 	Vertex(): color{1.0f, 1.0f, 1.0f}{		
 	}
@@ -45,12 +49,14 @@ public:
 
 	// Per-instance data block
 	struct InstanceData {
-		glm::vec3 pos;
-		glm::vec3 rot;
-		float scale;
+		glm::vec3 pos = {0.0f, 0.0f, 0.0f};
+		glm::vec3 rot = {0.0f, 0.0f, 0.0f};
+		float scale = 1.0f;
 //		uint32_t texIndex;
 	};
-/
+
+	bool shouldRecreateInstances = false;
+
 	struct InstanceBuffer {
 		VkBuffer buffer = VK_NULL_HANDLE;
 		VkDeviceMemory memory = VK_NULL_HANDLE;
@@ -58,7 +64,21 @@ public:
 		VkDescriptorBufferInfo descriptor;
 	};
 
-	class {
+	class InstanceView {
+		InstanceData* instance_;
+	public:
+		InstanceView(InstanceData* inst = nullptr): instance_(inst){}
+		void reset(InstanceData* newInstance = nullptr) {
+			instance_ = newInstance;
+		}
+
+		InstanceData* instance() const{
+			return instance_;
+		};
+
+	};
+
+	struct Model{
 		
 		VkPipeline pipeline;
 		VkDescriptorSet descriptorSet;
@@ -66,23 +86,17 @@ public:
 		vks::Model model;
 
 		std::vector<InstanceData> instances;
-		InstanceBuffer instanceBuf;
-		size_t instance_count;
+		std::list<InstanceView> instanceViews;
+		vks::Buffer instanceBuf;
 
-		Model(std::string model_filename, std::string texture_filename){
-
-		};
-		Model(std::vector<Vertex> vertices, std::string texture_filename){
-
-		};
-	} Model;
+		virtual ~Model(){};
+	};
 
 	std::vector<Model> models;
 
-	Model constructModel(std::string model_filename, std::string texture_filename){
-		Model ret;
+	void constructModel(std::string model_filename, std::string texture_filename, Model& model){
 
-		ret.model.loadFromFile("/data/models" + model_filename + ".dae", vertexLayout, 0.1f, vulkanDevice, queue);
+		model.model.loadFromFile("./data/Models/" + model_filename + ".dae", vertexLayout, 0.1f, vulkanDevice, queue);
 
 		// Textures
 		VkFormat texFormat;
@@ -90,7 +104,7 @@ public:
 		
 		texFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
-		model.texture.loadFromFile(getAssetPath() + "data/textures/" + texture_filename + ".ktx", texFormat, vulkanDevice, queue);
+		model.texture.loadFromFile("./data/Textures/" + texture_filename + ".ktx", texFormat, vulkanDevice, queue);
 
 	}
 
@@ -107,11 +121,9 @@ public:
 	// Contains the instanced data
 
 	struct UBOVS {
-		glm::mat4 projection;
-		glm::mat4 view;
-		glm::vec4 lightPos = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
-		float locSpeed = 0.0f;
-		float globSpeed = 0.0f;
+		glm::mat4 projectionMatrix;
+		glm::vec4 viewPos;
+		glm::vec4 lightDirection = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
 	} uboVS;
 
 	struct {
@@ -124,28 +136,28 @@ public:
 
 
 
-	VulkanExample() : VulkanExampleBase(ENABLE_VALIDATION)
+	VulkanExample(std::string windowName) : VulkanExampleBase(ENABLE_VALIDATION)
 	{
-		title = "MazeGame";
-		zoom = -18.5f;
-		rotation = { -17.2f, -4.7f, 0.0f };
-		cameraPos = { 5.5f, -1.85f, 0.0f };
+		zoom = -2.5f;
+		rotation = { 0.0f, 15.0f, 0.0f };
+		title = windowName;
 		settings.overlay = true;
-	}
+    	UIOverlay.visible = true;	}
 
 	~VulkanExample()
 	{
-		vkDestroyPipeline(device, pipelines.instancedRocks, nullptr);
-		vkDestroyPipeline(device, pipelines.planet, nullptr);
-		vkDestroyPipeline(device, pipelines.starfield, nullptr);
+		for(auto& model: models){
+			vkDestroyPipeline(device, model.pipeline, nullptr);
+		}
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-		vkDestroyBuffer(device, instanceBuffer.buffer, nullptr);
-		vkFreeMemory(device, instanceBuffer.memory, nullptr);
-		models.rock.destroy();
-		models.planet.destroy();
-		textures.rocks.destroy();
-		textures.planet.destroy();
+		for(auto& model: models){
+			//vkDestroyBuffer(device, model.instanceBuf.buffer, nullptr);
+			//vkFreeMemory(device, model.instanceBuf.memory, nullptr);
+			model.instanceBuf.destroy();
+			model.model.destroy();
+			model.texture.destroy();
+		}
 		uniformBuffers.scene.destroy();
 	}
 
@@ -202,13 +214,16 @@ public:
 
 
 			for(auto& model: models){
+				if(model.instances.empty())
+					continue;
+				
 				vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &model.descriptorSet, 0, NULL);
 				vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, model.pipeline);
 				vkCmdBindVertexBuffers(drawCmdBuffers[i], VERTEX_BUFFER_BIND_ID, 1, &model.model.vertices.buffer, offsets);
 				// Binding point 1 : Instance data buffer
 				vkCmdBindVertexBuffers(drawCmdBuffers[i], INSTANCE_BUFFER_BIND_ID, 1, &model.instanceBuf.buffer, offsets);
-				vkCmdBindIndexBuffer(drawCmdBuffers[i], model.model.rock.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
-				vkCmdDrawIndexed(drawCmdBuffers[i], models.rock.indexCount, model.instance_count, 0, 0, 0);
+				vkCmdBindIndexBuffer(drawCmdBuffers[i], model.model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdDrawIndexed(drawCmdBuffers[i], model.model.indexCount, model.instances.size(), 0, 0, 0);
 			
 			}
 
@@ -222,7 +237,8 @@ public:
 
 	void loadAssets()
 	{
-		models.push_back(constructModel("Model", "Model"));
+		models.push_back(Model{});
+		constructModel("Model", "Model", (*(models.end() - 1)));
 	}
 
 	void setupDescriptorPool()
@@ -402,8 +418,8 @@ public:
 			pipelineCreateInfo.pVertexInputState = &inputState;
 
 			// Instancing pipeline
-			shaderStages[0] = loadShader(getAssetPath() + "shaders/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-			shaderStages[1] = loadShader(getAssetPath() + "shaders/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+			shaderStages[0] = loadShader("shaders/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			shaderStages[1] = loadShader("shaders/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 			// Use all input bindings and attribute descriptions
 			inputState.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
 			inputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -415,16 +431,21 @@ public:
 	{
 
 		for(auto& model: models){
-			std::vector<InstanceData> instanceData;
-			instanceData.resize(INSTANCE_COUNT);
-
-
-			model.instanceBuf.size = model.instances.size() * sizeof(InstanceData);
-
+			if(model.instances.empty())
+				continue;
 			// Staging
 			// Instanced data is static, copy to device local memory 
 			// This results in better performance
 
+			VK_CHECK_RESULT(vulkanDevice->createBuffer(
+				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				&model.instanceBuf,
+				model.instances.size() * sizeof(InstanceData),
+				model.instances.data()));
+
+			VK_CHECK_RESULT(model.instanceBuf.map());
+/*
 			struct {
 				VkDeviceMemory memory;
 				VkBuffer buffer;
@@ -466,6 +487,7 @@ public:
 			// Destroy staging resources
 			vkDestroyBuffer(device, stagingBuffer.buffer, nullptr);
 			vkFreeMemory(device, stagingBuffer.memory, nullptr);
+*/
 		}
 	}
 
@@ -480,32 +502,50 @@ public:
 		// Map persistent
 		VK_CHECK_RESULT(uniformBuffers.scene.map());
 
-		updateUniformBuffer(true);
+		updateUniformBuffers(true);
 	}
 
-	void updateUniformBuffer(bool viewChanged)
+	void updateUniformBuffers(bool viewChanged = true)
 	{
 		if (viewChanged)
 		{
-			uboVS.projection = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 256.0f);
-			uboVS.view = glm::translate(glm::mat4(1.0f), cameraPos + glm::vec3(0.0f, 0.0f, zoom));
-			uboVS.view = glm::rotate(uboVS.view, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-			uboVS.view = glm::rotate(uboVS.view, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-			uboVS.view = glm::rotate(uboVS.view, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+			uboVS.projectionMatrix = glm::rotate(glm::mat4(1.0f) , glm::radians( - rotation.x * 0.25f), glm::vec3(1.0f, 0.0f, 0.0f));
+			uboVS.projectionMatrix = glm::rotate(uboVS.projectionMatrix, glm::radians( - rotation.y * 0.25f), glm::vec3(0.0f, 1.0f, 0.0f));
+			uboVS.projectionMatrix = glm::rotate(uboVS.projectionMatrix, glm::radians( - rotation.z * 0.25f), glm::vec3(0.0f, 0.0f, 1.0f));
+			uboVS.projectionMatrix = glm::translate(uboVS.projectionMatrix, cameraPos);
+			uboVS.projectionMatrix = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f) * uboVS.projectionMatrix;
+			uboVS.viewPos = glm::vec4(-cameraPos, 0.0f);
+
 		}
 
-		if (!paused)
-		{
-			uboVS.locSpeed += frameTimer * 0.35f;
-			uboVS.globSpeed += frameTimer * 0.01f;
-		}
+
 
 		memcpy(uniformBuffers.scene.mapped, &uboVS, sizeof(uboVS));
-		prepareInstanceData();
+
 	}
 
+	void updateInstanceBuffers()
+	{
+		for(auto& model: models){
+			if(model.instances.empty())
+				continue;
+			memcpy(model.instanceBuf.mapped, model.instances.data(), model.instances.size() * sizeof(InstanceData));
+		}
+
+
+	}
 	void draw()
 	{
+
+		if(shouldRecreateInstances){
+			updateInstanceBuffers();
+			buildCommandBuffers();
+			shouldRecreateInstances = false;
+		}
+
+
+		updateInstanceBuffers();
+
 		VulkanExampleBase::prepareFrame();
 
 		// Command buffer to be sumitted to the queue
@@ -518,18 +558,83 @@ public:
 		VulkanExampleBase::submitFrame();
 	}
 
+	void moveModels(){
+		for(auto& model: models){
+			for(auto& instance: model.instances)
+				instance.pos += glm::vec3{1.0f, 0.0f, 0.0f};
+		}
+		updateInstanceBuffers();
+	}
+
 	void prepare()
 	{
+		std::cout << "Preparing Vulkan" << std::endl;
 		VulkanExampleBase::prepare();
+		std::cout << "Vk base prepared" << std::endl;
 		loadAssets();
+		std::cout << "Assets loaded" << std::endl;
 		prepareInstanceData();
+		std::cout << "Instance data prepared" << std::endl;
 		prepareUniformBuffers();
+		std::cout << "Uniform buffers prepared" << std::endl;
 		setupDescriptorSetLayout();
+		std::cout << "DescriptoLayout prepared" << std::endl;
 		preparePipelines();
+		std::cout << "Pipelines prepared" << std::endl;
 		setupDescriptorPool();
+		std::cout << "Descriptor pool prepared" << std::endl;
 		setupDescriptorSet();
+		std::cout << "Desctiptor set prepared" << std::endl;
 		buildCommandBuffers();
+		std::cout << "Command Buffer prepared" << std::endl;
 		prepared = true;
+	}
+
+	InstanceView const& addInstance(int model_id){
+		Model& model = models[model_id];
+		model.instances.emplace_back();
+		model.instanceViews.emplace_back(&(*(model.instances.end() - 1)));
+		model.instanceBuf.destroy();
+
+		model.instanceBuf.size = model.instances.size() * sizeof(InstanceData);
+
+		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			&model.instanceBuf,
+			model.instances.size() * sizeof(InstanceData),
+			model.instances.data()));
+
+		VK_CHECK_RESULT(model.instanceBuf.map());
+
+		shouldRecreateInstances = true;
+
+		return *(--model.instanceViews.end());
+	}
+
+	void returnInstance(InstanceView const& instance){
+		for(auto& model: models){
+			bool flag = false;
+			for(auto& view: model.instanceViews)
+				if(&view == &instance){
+					view.reset();
+					flag = true;
+					break;
+				}
+			if(flag){
+				model.instanceViews.remove_if([](InstanceView const& obj) -> bool { return obj.instance() == nullptr; });
+
+				model.instances.resize(model.instances.size() - 1);
+				auto view_it = model.instanceViews.begin();
+				auto inst_it = model.instances.begin();
+
+				for(; inst_it != model.instances.end(); view_it++, inst_it++)
+					(*view_it).reset(&(*inst_it));
+				break;
+			}
+		}
+
+		shouldRecreateInstances = true;
 	}
 
 	virtual void render()
@@ -541,13 +646,8 @@ public:
 		draw();
 		if (!paused)
 		{
-			updateUniformBuffer(false);
+			updateUniformBuffers(false);
 		}
-	}
-
-	virtual void viewChanged()
-	{
-		updateUniformBuffer(true);
 	}
 
 
@@ -559,7 +659,7 @@ public:
 	void moveCameraRight(float distance);
 	void moveCameraUp(float distance);
 	void moveCameraDown(float distance);
-	void mouseMoved(double x, double y, bool &handled);	
+	void mouseMoved(double x, double y, bool &handled);
 
 	virtual void viewChanged();
 

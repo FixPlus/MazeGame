@@ -37,22 +37,6 @@ public:
 		renderLoop();
 	};
 
-	template<typename It> //any random access iterator
-	void connect(It beginStatic, It endStatic, It beginDynamic, It endDynamic) {
-		prepared = false;
-		prepare((endStatic - beginStatic) * 3, (endDynamic - beginDynamic) * 3);
-
-		auto vertStatIt = localStaticVertices.begin();
-		auto vertDynIt = localDynamicVertices.begin();
-
-		for(; beginStatic < endStatic; beginStatic++, vertStatIt += 3)
-			beginStatic[0].setIt(vertStatIt);
-
-		for(; beginDynamic < endDynamic; beginDynamic++, vertDynIt += 3)
-			beginDynamic[0].setIt(vertDynIt);
-
-
-	} //connects the triangles iterators to localVertices buffer
 
 	bool shouldQuit() const { return quit;}; //return the APIManager state quit
 

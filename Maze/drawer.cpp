@@ -27,14 +27,13 @@ namespace triGraphic{
 
 	rotation.x = init_camera_rot_x;
 	rotation.y = init_camera_rot_y;
-
 	initVulkan();
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 	setupWindow();
 #elif defined(_WIN32)																	
 	setupWindow(hInstance, WndProc);													
 #endif
-
+	prepare();
 }
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)

@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -std=c++17 -I./external -I./external/glm -I./external/gli -I./base -O2
-LDFLAGS = -L./libs/vulkan -lvulkan -L./base -lxcb
+LDFLAGS = -L./libs/vulkan -lvulkan -L./base -lxcb -lassimp
 
 DEFS = -D VK_USE_PLATFORM_XCB_KHR
 
