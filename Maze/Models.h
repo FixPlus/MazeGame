@@ -90,12 +90,48 @@ public:
 		instance_->instance()->scale = mult;
 	};
 
+	void rotate(glm::vec3 rotAxis, float angle) override{
+		glm::fquat instRot{instance_->instance()->rot};
+		instRot = glm::rotate(instRot, glm::radians(angle), rotAxis);
+		instRot = glm::normalize(instRot);
+		instance_->instance()->rot = glm::eulerAngles(instRot);
+	};
 
-	void rotate(float dt) override{};
 
-	void rotate(glm::vec3 rotAxis, float angle) override{};
 
-	void faceOnAxis(glm::vec3 axis) override{};
+	void rotate(float dt) override{
+		//instance_->instance()->rot += glm::vec3(0.0f, 1.0f * dt, 1.0f * dt);
+		for(auto& rot: rotations){
+			glm::fquat instRot{instance_->instance()->rot};
+			instance_->instance()->rot = glm::vec3{0.0f, 0.0f, 0.0f}; 
+			rotate(rot.first, rot.second * dt);
+			rotate(glm::axis(instRot), glm::degrees(glm::angle(instRot)));
+		}
+	};
+
+
+	void faceOnAxis(glm::vec3 axis) override{
+		axis = glm::normalize(axis);
+/*		glm::vec3 xzProj = glm::vec3{axis.x, 0.0f, axis.z};
+		if(glm::length(xzProj) > __FLT_EPSILON__){
+			xzProj = glm::normalize(xzProj);
+		}
+
+		float xangle =  acos(glm::dot(xzProj, glm::vec3{1.0f, 0.0f, 0.0f}));
+		if(glm::dot(xzProj, glm::vec3{0.0f, 0.0f, 1.0f}) < 0.0f)
+			xangle = -xangle;
+		
+
+
+		float yangle = asin(glm::dot(axis, glm::vec3{0.0f, 1.0f, 0.0f}));
+		instance_->instance()->rot = glm::vec3{xangle, yangle, 0.0f};
+*/
+		glm::fquat instRot{glm::vec3{0.0f, 0.0f, 0.0f}};
+		instRot = glm::rotate(instRot, acos(glm::dot(axis, glm::vec3{1.0f, 0.0f, 0.0f})), glm::cross(axis, glm::vec3{1.0f, 0.0f, 0.0f}));
+		instRot = glm::normalize(instRot);
+		instance_->instance()->rot = glm::eulerAngles(instRot);
+
+	};
 
 	~SingleInstanceModel(){
 		drawer->returnInstance(instance_);
