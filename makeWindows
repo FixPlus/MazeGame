@@ -1,6 +1,9 @@
 CC = g++
 CFLAGS = -std=c++17 -I./external -I./external/glm -I./external/gli -I./base -O2
-LDFLAGS = -L./libs/vulkan/lib32 -L./base -lvulkan-1 -lgdi32 -static-libgcc -static-libstdc++ -static -lpthread  -lassimp
+LDFLAGS =  -L./libs/vulkan/lib32 -L./base -L./libs/assimp/32bit -L./libs/assimp/zlib  -lvulkan-1 -static -lassimp  -lgdi32 -static-libgcc -static-libstdc++  -static -lpthread 
+
+ZLIBOBJS = libs/zlib/adler32.o libs/zlib/compress.o libs/zlib/crc32.o libs/zlib/deflate.o libs/zlib/gzclose.o libs/zlib/gzlib.o libs/zlib/gzread.o \
+       libs/zlib/gzwrite.o libs/zlib/infback.o libs/zlib/inffast.o libs/zlib/inflate.o libs/zlib/inftrees.o libs/zlib/trees.o libs/zlib/uncompr.o libs/zlib/zutil.o
 
 DEFS = -D _WIN32 -D VK_USE_PLATFORM_WIN32_KHR
 
@@ -24,7 +27,7 @@ MAZE_EXEC = MazeGame
 
 
 $(MAZE_EXEC): $(MAZE_OBJECTS)
-	$(CC) $(CFLAGS) $(MAZE_OBJECTS)  -o $@ $(LDFLAGS) $(DEFS)
+	$(CC) $(CFLAGS) $(MAZE_OBJECTS) $(ZLIBOBJS)  -o $@ $(LDFLAGS) $(DEFS)
 
 include .depend
 
