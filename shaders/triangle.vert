@@ -83,11 +83,6 @@ void main()
 	outTrace = trace;
 	outViewTrace = ubo.viewPos.xyz - pos.xyz;
 	outLodBias = length(outViewTrace) / 100.0;
-	if(dot(outNormal, outViewTrace) < 0.0f){
-		outUV = vec3(0.0f, 0.0f, 0.0f);
-		outColor = vec3(-1.0f, -1.0f, -1.0f);
-	}
-	else{
-		outColor = inColor;
-	}
+	outColor = inColor;
+	
 }

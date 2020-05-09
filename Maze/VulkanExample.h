@@ -276,7 +276,6 @@ public:
 
 
 		for(auto& model: models){
-			std::cout << "Hubba-bubba" << std::endl;
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &descripotrSetAllocInfo, &model.descriptorSet));
 			writeDescriptorSets = {			
 				vks::initializers::writeDescriptorSet(model.descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,	0, &uniformBuffers.scene.descriptor),	// Binding 0 : Vertex shader uniform buffer			
@@ -491,7 +490,7 @@ public:
 			uboVS.projectionMatrix = glm::rotate(uboVS.projectionMatrix, glm::radians( - rotation.y * 0.25f), glm::vec3(0.0f, 1.0f, 0.0f));
 			uboVS.projectionMatrix = glm::rotate(uboVS.projectionMatrix, glm::radians( - rotation.z * 0.25f), glm::vec3(0.0f, 0.0f, 1.0f));
 			uboVS.projectionMatrix = glm::translate(uboVS.projectionMatrix, cameraPos);
-			uboVS.projectionMatrix = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f) * uboVS.projectionMatrix;
+			uboVS.projectionMatrix = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 750.0f) * uboVS.projectionMatrix;
 			uboVS.viewPos = glm::vec4(-cameraPos, 0.0f);
 
 		}
