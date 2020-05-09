@@ -493,7 +493,7 @@ class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
 
 	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 public:
-	explicit Cannon(Cell* par, float size = 20.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
+	explicit Cannon(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
 	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size), fire_rate(fr) { setInPosition(); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); id = next_id++;};
 
 	ObjectInfo getInfo() const override{

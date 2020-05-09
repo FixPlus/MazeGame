@@ -123,7 +123,7 @@ public:
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size * 10.0f){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -272,7 +272,7 @@ void GameManager::setupLevelScene(){
 
 
 	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 30.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
 
 

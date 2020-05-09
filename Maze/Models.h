@@ -198,7 +198,7 @@ public:
 					walls.emplace_back(drawer->addInstance(MazeGame::M_MODEL));
 					InstanceData* instance = (*(--walls.end()))->instance();
 					instance->pos = glm::vec3{i * cellSize, getZeroLevel(), j * cellSize};
-					instance->scale = cellSize * 5.0f;
+					instance->scale = cellSize;
 				}
 				std::cout << "Field made with " << walls.size() << " walls" << std::endl;
 

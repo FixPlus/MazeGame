@@ -68,7 +68,7 @@ void main()
 	mat3 rotMat = mz * my * mx;
 
 	vec4 locPos = vec4(inPos.xyz * rotMat, 1.0);
-	vec4 pos = vec4((locPos.xyz * instanceScale) + instancePos, 1.0);
+	vec4 pos = vec4((locPos.xyz * instanceScale * 5.0f) + instancePos, 1.0);
 
 
 
