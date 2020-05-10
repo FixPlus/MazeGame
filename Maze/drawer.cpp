@@ -1,5 +1,5 @@
 #include "drawer.h"
-
+#include "ModelList.h"
 namespace triGraphic{
 
 	Drawer::Drawer( 
@@ -27,7 +27,6 @@ namespace triGraphic{
 
 	rotation.x = init_camera_rot_x;
 	rotation.y = init_camera_rot_y;
-
 	initVulkan();
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 	setupWindow();
@@ -35,6 +34,10 @@ namespace triGraphic{
 	setupWindow(hInstance, WndProc);													
 #endif
 
+	std::vector<std::pair<std::string, std::string>> modelsInfo;
+	for(int i = 0; i < static_cast<int>(MazeGame::M_LAST); i++)
+		modelsInfo.emplace_back(make_pair(MazeGame::model_filenames[i], MazeGame::texture_filenames[i]));
+	prepare(modelsInfo.begin(), modelsInfo.end());
 }
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)

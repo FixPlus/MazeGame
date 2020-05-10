@@ -13,7 +13,7 @@
 #include <list>
 #include <cstdlib>
 #include "MazeStandartHeader.h"
-
+#include "InputHandler.h"
 
 /*
 	Maze Game 3D
@@ -72,6 +72,7 @@
 	TODO: Sound effects implementation
 
 
+
 */
 
 
@@ -82,7 +83,7 @@ Drawer* drawer;
 
 
 
-DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
+//DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
 MazeGame::GameCore* MazeGame::gameCore;
 MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
 bool MazeGame::should_update_static_vertices = false; 
@@ -91,6 +92,7 @@ int MazeGame::CoinObject::count = 0;
 int MazeGame::GameObject::count = 0;
 template<typename AnyDynamicModel>
 int MazeGame::Cannon<AnyDynamicModel>::next_id = 1;
+
 float MAZE_FPS = 0.0f;
 
 
@@ -207,40 +209,35 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	MazeGame::GameCore*& gc_ref = MazeGame::gameCore;
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
-	drawer = new Drawer(style, nullptr, [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
+		std::cout << "Constructing drawer" << std::endl;
+	drawer = new Drawer(style, nullptr,  [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
 
 #elif defined(_WIN32)
 
-	drawer = new Drawer(hInstance, WndProc, style, [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
+	drawer = new Drawer(hInstance, WndProc, style,[&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
 
 #endif
+
 //	drawer->uboVS.lodBias = 6.0f;
 
-
-// STEP 2 : Initializing triangle manager
-
-	MazeGame::triManager = DTManager{drawer, 25000, 25000};
-
-
-// STEP 3: Initializing GameManager
+// STEP 2: Initializing GameManager
 
 
 
-	//TODO: organize GameObjects creation in some manager class (aka MECH_MANAGER), move there all game mechanics realization
 
 	MazeGame::gameCore = new MazeGame::GameManager{fieldSize, fieldSize};
 	
 	MazeGame::gameCore->initialize();
 
+	MazeUI::Window* fpsWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+	fpsWindow->addNewItem(new MazeUI::StatText<float>(MAZE_FPS, "fps"));
+	MazeUI::manager.addNewElement(fpsWindow);
 
-// STEP 4: finishing initialization, updating static vertices
-
-	drawer->updateStaticVertices();
 	drawer->updateOverlay();
 
 // GAME LOOP STARTS HERE
 
-	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit()){
+	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit() ){
 
 	
 		auto tStart = std::chrono::high_resolution_clock::now();
@@ -250,12 +247,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		drawer->handleEvents(); // LISTENING TO USER INPUT
 #endif
-	//	player->moveInDirection();
-		if(MazeGame::should_update_static_vertices){
-			MazeGame::gameCore->recreate();
-			drawer->updateStaticVertices();
-			MazeGame::should_update_static_vertices = false;
-		}
+
 		drawer->draw(); //RENDERING THE FRAME
 
 
@@ -296,7 +288,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	delete drawer;
 
 	return 0; 
-
-} // triangle manager and game field are destroyed here
+}
 
 

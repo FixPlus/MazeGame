@@ -65,7 +65,7 @@ protected:
 	InputHandler inputHandler;
 
 public:
-	GameCore(int f_w = 50, int f_h = 50): ::triGraphic::Field(f_w, f_h){};
+	GameCore(int f_w = 200, int f_h = 200): ::triGraphic::Field(f_w, f_h){};
 
 	GameCore& operator=(GameCore&& another){
 		if(&another != this){
@@ -84,7 +84,7 @@ public:
 
 		for(auto& object: objects)
 			for(auto& nei: object->getParent()->objects)
-				if(nei != object && object->getParent() == nei->getParent()) 
+				if(nei != object) 
 					object->interact(nei);
 
 		for(auto& object: objects)

@@ -201,6 +201,19 @@ public:
 
 	}
 
+	void changeSize(int nWidth, int nHeight){
+		cells.clear();
+		width = nWidth;
+		height = nHeight;
+		cells.resize(width * height);
+		for(int i = 0; i < height; i++)
+			for(int j = 0; j < width; j++){
+				cells[i*width + j].x = j;
+				cells[i*width + j].y = i;
+				cells[i*width + j].type = CellType::PATH;
+			}
+	}
+
 
 	// up right down left
 	std::vector<bool> openSideFaces(int x, int y) const{
@@ -227,11 +240,12 @@ public:
 
 
 	Cell* getRandomCell(std::function<bool(Cell*)> rule = [](Cell*){ return true;}){
-		while(true){
+
+		for(int n_tries = 0; n_tries < 1000; n_tries++){
 			int index = rand() % cells.size();
 			Cell* ret = &cells[index];
 			if(rule(ret))
-				return ret; 
+				return ret;
 		}
 		return nullptr;
 	}

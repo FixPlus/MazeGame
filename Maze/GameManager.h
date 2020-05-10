@@ -73,8 +73,11 @@ public:
 				++genCount;
 				for(int i = 0; i < amount; ++i){
 					
-
-					GameObject* obj = objConstruct(gameCore->getRandomCell(cellRule)); 
+					Cell* parent = gameCore->getRandomCell(cellRule);
+					GameObject* obj = nullptr;
+					if(parent != nullptr)
+						obj = objConstruct(parent);
+					
 					// may return nullptr if GameObject cant be spawned under some circumstances written inside lambda 
 					// This is the legal way to limit the spawn of objects to avoid exceptional situation 
 
@@ -123,7 +126,7 @@ public:
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(size, color){ rotSpeed = 400.0f; };
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
@@ -136,7 +139,7 @@ public:
 			changeDirection(dir + nextDir);
 
 		if(!isChangingDirection() && onFiring)
-			gameCore->addNewGameObject(new MazeGame::Bullet<SimpleOctagon>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
+			gameCore->addNewGameObject(new MazeGame::Bullet<SingleInstanceModel>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
 
 		DynamicDirectedObject::update(dt);
 	}
@@ -149,7 +152,7 @@ public:
 				break;
 			}
 			case ObjectType::BULLET: {
-				if(info.data != 0)
+				if(another->getParent() == getParent() && info.data != 0)
 					modifyHP(-5.0f);
 				break;
 			}
@@ -166,11 +169,15 @@ public:
 
 class GameManager: public GameCore{
 	CameraKeeper camKeep;
-	PlayerObject<SimpleArrow>* player; // this is NOT owning pointer
+	PlayerObject<SingleInstanceModel>* player; // this is NOT owning pointer
 	ObjectSpawner spawner;
 public:
 	int setup = 0;
 	bool paused = false;
+	struct {
+		int width = 75;
+		int height = 75;
+	} options;
 
 	GameManager(int f_w = 50, int f_h = 50): GameCore(f_w, f_h){
 
@@ -182,9 +189,9 @@ public:
 
 	void initialize() override {
 
-		generateRandomMaze();
+		//generateRandomMaze();
 
-		recreate();
+		//recreate();
 
 		setupMenuScene();
 
@@ -216,16 +223,28 @@ public:
 
 void GameManager::setupMenuScene(){
 	freeGameObjects();
-	recreate();
+	spawner.clear();
+	Field::clear();
+	//recreate();
 	camKeep = CameraKeeper{dynamic_cast<Model*>(this), {-70.0f,-60.0f,-70.0f}};
 	MazeUI::manager.clear();
-	MazeUI::Window* menuWindow = new MazeUI::Window("Maze game", 0.4f, 0.4f, 0.2f, 0.2f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	MazeUI::Window* menuWindow = new MazeUI::Window("Maze game", 0.4f, 0.4f, 0.2f, 0.25f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	menuWindow->addNewItem(new MazeUI::Button("Play!", [this](){
 		setup = 2;
 	}, 0.19f, 0.05f));		
+	menuWindow->addNewItem(new MazeUI::Button("Options", [this, menuWindow](){
+		MazeUI::Window* optionsWindow  = new MazeUI::Window("Options", 0.4f, 0.4f, 0.2f, 0.3f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+		optionsWindow->addNewItem(new MazeUI::Text("Field options"));
+		optionsWindow->addNewItem(new MazeUI::InputBox("width", [this](int nWidth){ this->options.width = nWidth;}, this->options.width, 30.0f, 150.0f));
+		optionsWindow->addNewItem(new MazeUI::InputBox("height", [this](int nHeight){ this->options.height = nHeight;}, this->options.height, 30.0f, 150.0f));
+		optionsWindow->addNewItem(new MazeUI::Button("Back", [optionsWindow, menuWindow](){ optionsWindow->expired = true; menuWindow->visible = true;}));
+		menuWindow->visible = false;
+		MazeUI::manager.addNewElement(optionsWindow);
+	}, 0.19f, 0.05f));	
 	menuWindow->addNewItem(new MazeUI::Button("Exit", [this](){
 		quit = true;
-	}, 0.19f, 0.05f));		
+	}, 0.19f, 0.05f));
+
 	MazeUI::manager.addNewElement(menuWindow);
 
 	inputHandler.reset();		
@@ -234,12 +253,14 @@ void GameManager::setupMenuScene(){
 void GameManager::setupLevelScene(){
 
 	freeGameObjects();
+	changeSize(options.width, options.height);
 	generateRandomMaze();
 	recreate();
+	paused = false;
 
 	Cell* init = getRandomCell([](Cell* c){ return c->type == CellType::PATH;});
 
-	player = dynamic_cast<PlayerObject<SimpleArrow>*>(addNewGameObject(new PlayerObject<SimpleArrow>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
+	player = dynamic_cast<PlayerObject<SingleInstanceModel>*>(addNewGameObject(new PlayerObject<SingleInstanceModel>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
 
 	player->onDeath = [this](){
 		player = nullptr;
@@ -266,13 +287,9 @@ void GameManager::setupLevelScene(){
 	}
 */
 
-	//This task will spawn 2 Powerup objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 2, [](Cell* par)->GameObject*{ return new Powerup<CoinModel>(par);},
-										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
-
 
 	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new Cannon<SimpleArrow>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
 
 
@@ -280,6 +297,44 @@ void GameManager::setupLevelScene(){
 	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new CoinObject(par);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
 
+	int spike_dir = 2;
+
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+										       [this, spike_dir](Cell* c){ 
+
+										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
+										       		if(c->type != CellType::PATH) 
+										       			return 1; 
+										       		else 
+										       			if(isThereObjectsInCell(c, [](const GameObject* obj){ return obj->getInfo().type == ObjectType::NPC && obj->getInfo().data == -1;})) 
+										       				return -getWidth() - getHeight();
+										       			else
+										       				return 1 + lenChecker(getNeiCell(c, static_cast<Dirs>(dir)), dir);
+										       		};
+
+										       	return c->type == CellType::PATH && !isThereObjectsInCell(c) && (lenChecker(c, spike_dir * 2) + lenChecker(c, ((spike_dir - 2) * 2) % 8) - 3 > 5);
+										       },5.0f});
+
+	spike_dir = 1;
+
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+										       [this, spike_dir](Cell* c){ 
+
+										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
+										       		if(c->type != CellType::PATH) 
+										       			return 1; 
+										       		else 
+										       			if(isThereObjectsInCell(c, [](const GameObject* obj){ return obj->getInfo().type == ObjectType::NPC && obj->getInfo().data == -1;})) 
+										       				return -getWidth() - getHeight();
+										       			else
+										       				return 1 + lenChecker(getNeiCell(c, static_cast<Dirs>(dir)), dir);
+										       		};
+
+										       	return c->type == CellType::PATH && !isThereObjectsInCell(c) && (lenChecker(c, spike_dir * 2) + lenChecker(c, ((spike_dir + 2) * 2) % 8) - 3 > 5);
+										       }, 5.0f});
+
+
+//	spawner.clear();
 	MazeUI::manager.clear();
 	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.85f, 0.2f, 0.15f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	statWindow->addNewItem(new MazeUI::StatText<float>(player->hp(), "HP"));
@@ -308,14 +363,19 @@ void GameManager::setupLevelScene(){
 	hintWindow->addNewItem(new MazeUI::Text("Press 'R' to fire"));
 	//hintWindow->visible = false;
 
+	MazeUI::Window* pauseWindow = new MazeUI::Window("Pause window", 0.4f, 0.45f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse| ImGuiWindowFlags_NoTitleBar);
+	pauseWindow->addNewItem(new MazeUI::Text("Game Paused"));
+	pauseWindow->visible = false;
+
 	MazeUI::manager.addNewElement(statWindow);
 	MazeUI::manager.addNewElement(fpsWindow);
 	MazeUI::manager.addNewElement(debugWindow);
 	MazeUI::manager.addNewElement(hintWindow);
+	MazeUI::manager.addNewElement(pauseWindow);
 
 	inputHandler.reset();		
 
-	inputHandler.onKeyDown = [this, debugWindow](unsigned char key){ 		
+	inputHandler.onKeyDown = [this, debugWindow, pauseWindow](unsigned char key){ 		
 		switch (key)
 		{
 			case KEY_W:{
@@ -345,6 +405,7 @@ void GameManager::setupLevelScene(){
 				break;	
 			case KEY_ESCAPE:
 				paused = !paused;
+				pauseWindow->visible = !pauseWindow->visible;
 				break;			
 		}
 	};

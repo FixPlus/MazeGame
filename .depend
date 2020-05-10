@@ -186,7 +186,7 @@ base/VulkanDebug.o: base/VulkanDebug.cpp base/VulkanDebug.h \
  external/glm/glm/detail/func_integer_simd.inl \
  external/glm/glm/detail/../simd/integer.h
 
-Maze/drawer.o: Maze/drawer.cpp Maze/drawer.h Maze/VulkanExample.h \
+Maze/drawer.o: Maze/drawer.cpp Maze/drawer.h Maze/VulkanExample.h Maze/ModelList.h \
  external/glm/glm/glm.hpp external/glm/glm/detail/_fixes.hpp \
  external/glm/glm/detail/setup.hpp \
  external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
@@ -285,7 +285,7 @@ Maze/drawer.o: Maze/drawer.cpp Maze/drawer.h Maze/VulkanExample.h \
  Maze/DrawableTriangle.h
 
 
- Maze/VulkanExample.o: Maze/VulkanExample.cpp Maze/VulkanExample.h \
+ Maze/VulkanExample.o: Maze/VulkanExample.cpp Maze/VulkanExample.h Maze/ModelList.h \
  external/glm/glm/glm.hpp external/glm/glm/detail/_fixes.hpp \
  external/glm/glm/detail/setup.hpp \
  external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
@@ -382,7 +382,7 @@ Maze/drawer.o: Maze/drawer.cpp Maze/drawer.h Maze/VulkanExample.h \
  external/glm/glm/gtc/quaternion.hpp external/glm/glm/gtc/quaternion.inl \
  external/glm/glm/gtc/quaternion_simd.inl base/benchmark.hpp
 
-Maze/Maze.o: Maze/Maze.cpp Maze/drawer.h \
+Maze/Maze.o: Maze/Maze.cpp Maze/drawer.h Maze/ModelList.h \
  Maze/VulkanExample.h external/glm/glm/glm.hpp \
  external/glm/glm/detail/_fixes.hpp external/glm/glm/detail/setup.hpp \
  external/glm/glm/detail/../simd/platform.h external/glm/glm/fwd.hpp \
