@@ -152,7 +152,7 @@ public:
 				break;
 			}
 			case ObjectType::BULLET: {
-				if(info.data != 0)
+				if(another->getParent() == getParent() && info.data != 0)
 					modifyHP(-5.0f);
 				break;
 			}
