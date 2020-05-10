@@ -515,6 +515,12 @@ public:
 				break;
 			}
 			default:{}
+			case ObjectType::BULLET: {
+				if(info.data == 0){
+					expired = true;
+				}
+
+			}
 		}
 	};
 

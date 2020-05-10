@@ -124,6 +124,10 @@ public:
 	bool onFiring = false;
 
 	int nextDir = 0;
+	int ammo = 5;
+	float fire_timer = 0.0f;
+	float fire_rate = 2.0f;
+
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
 	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
@@ -133,14 +137,23 @@ public:
 	};
 
 	void update(float dt) override{
+		if(fire_timer < 1.0f/fire_rate)
+			fire_timer += dt;
+		else{
+			if(!isChangingDirection() && onFiring && ammo > 0){
+				gameCore->addNewGameObject(new Bullet<SingleInstanceModel>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
+				ammo--;
+				fire_timer = 0.0f;
+			}
+			if(fire_timer > 1.0f/fire_rate * 10.0f)
+				fire_timer = 1.0f/fire_rate * 5.0f;
+		}
 		if(onMove)
 			moveInDirection();
 		if(onRotate)
 			changeDirection(dir + nextDir);
 
-		if(!isChangingDirection() && onFiring)
-			gameCore->addNewGameObject(new MazeGame::Bullet<SingleInstanceModel>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
-
+	
 		DynamicDirectedObject::update(dt);
 	}
 
