@@ -65,6 +65,12 @@ public:
 		virtual ~Model(){};
 	};
 
+	struct Background{
+		VkPipeline pipeline;
+		VkDescriptorSet descriptorSet;
+		vks::Texture2D texture;
+	} background;
+
 	std::vector<Model> models;
 
 	void constructModel(std::string model_filename, std::string texture_filename, Model& model){
@@ -185,6 +191,10 @@ public:
 
 			VkDeviceSize offsets[1] = { 0 };
 
+			vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &background.descriptorSet, 0, NULL);
+			vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background.pipeline);
+			vkCmdDraw(drawCmdBuffers[i], 4, 1, 0, 0);
+
 
 			for(auto& model: models){
 				if(model.instances.empty())
@@ -216,6 +226,13 @@ public:
 			constructModel(begin->first, begin->second, (*(models.end() - 1)));
 			begin++;
 		}
+
+
+		//background texture 
+
+		background.texture.loadFromFile("./data/Textures/Background.ktx", VK_FORMAT_R8G8B8A8_UNORM, vulkanDevice, queue);
+
+
 	}
 
 	void setupDescriptorPool()
@@ -223,15 +240,15 @@ public:
 		// Example uses one ubo 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
-			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, models.size()),
-			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, models.size()),
+			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, models.size() + 1),
+			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, models.size() + 1),
 		};
 
 		VkDescriptorPoolCreateInfo descriptorPoolInfo =
 			vks::initializers::descriptorPoolCreateInfo(
 				poolSizes.size(),
 				poolSizes.data(),
-				models.size());
+				models.size() + 1);
 
 		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
 	}
@@ -284,6 +301,14 @@ public:
 			vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
 
 		}
+
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &descripotrSetAllocInfo, &background.descriptorSet));
+			writeDescriptorSets = {			
+				vks::initializers::writeDescriptorSet(background.descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,	0, &uniformBuffers.scene.descriptor),	// Binding 0 : Vertex shader uniform buffer			
+				vks::initializers::writeDescriptorSet(background.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &background.texture.descriptor)	// Binding 1 : Color map 
+			};
+			vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+
 
 	}
 
@@ -355,11 +380,12 @@ public:
 		pipelineCreateInfo.stageCount = shaderStages.size();
 		pipelineCreateInfo.pStages = shaderStages.data();
 
+		VkPipelineVertexInputStateCreateInfo inputState = vks::initializers::pipelineVertexInputStateCreateInfo();
+		std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+
 		for(auto& model: models){
 			// This example uses two different input states, one for the instanced part and one for non-instanced rendering
-			VkPipelineVertexInputStateCreateInfo inputState = vks::initializers::pipelineVertexInputStateCreateInfo();
-			std::vector<VkVertexInputBindingDescription> bindingDescriptions;
-			std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
 			// Vertex input bindings
 			// The instancing pipeline uses a vertex input state with two bindings
@@ -402,6 +428,15 @@ public:
 			inputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 			VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &model.pipeline));
 		}
+
+		rasterizationState.cullMode = VK_CULL_MODE_NONE;
+		depthStencilState.depthWriteEnable = VK_FALSE;
+		shaderStages[0] = loadShader( "shaders/background.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		shaderStages[1] = loadShader( "shaders/background.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		inputState.vertexBindingDescriptionCount = 1;
+		inputState.vertexAttributeDescriptionCount = 0;
+		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &background.pipeline));
+
 	}
 
 	void prepareInstanceData()

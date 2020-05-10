@@ -123,7 +123,7 @@ public:
 	int nextDir = 0;
 	std::function<void(void)> onDeath = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};

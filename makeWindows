@@ -17,7 +17,8 @@ MAZE_OBJECTS = $(MAZE_SOURCES:.cpp=.o)
 
 SHADER_DIR = ./shaders
 
-SHADERS = $(SHADER_DIR)/triangle.vert $(SHADER_DIR)/triangle.frag $(SHADER_DIR)/uioverlay.vert $(SHADER_DIR)/uioverlay.frag
+SHADERS = $(SHADER_DIR)/triangle.vert $(SHADER_DIR)/triangle.frag $(SHADER_DIR)/uioverlay.vert $(SHADER_DIR)/uioverlay.frag $(SHADER_DIR)/background.frag \
+$(SHADER_DIR)/background.vert
 TEMP = $(SHADERS:.vert=.vert.spv)
 COMP_SHADERS = $(TEMP:.frag=.frag.spv )
 
@@ -41,6 +42,8 @@ compile_shaders:
 	./shaders/glslc.exe ./shaders/triangle.frag -o ./shaders/triangle.frag.spv
 	./shaders/glslc.exe ./shaders/uioverlay.frag -o ./shaders/uioverlay.frag.spv
 	./shaders/glslc.exe ./shaders/uioverlay.vert -o ./shaders/uioverlay.vert.spv
+	./shaders/glslc.exe ./shaders/background.vert -o ./shaders/background.vert.spv
+	./shaders/glslc.exe ./shaders/background.frag -o ./shaders/background.frag.spv
 
 clean:
 	rm -f $(OBJECTS_TO_CLEAN) *.o $(COMP_SHADERS) $(MAZE_EXEC) 

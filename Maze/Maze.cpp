@@ -214,23 +214,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 #elif defined(_WIN32)
 
-	drawer = new Drawer(hInstance, WndProc, style, [&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
+	drawer = new Drawer(hInstance, WndProc, style,[&gc_ref](UserInputMessage message){ gc_ref->getInputHandler().handler(message);}, "MazeGame");
 
 #endif
 
 //	drawer->uboVS.lodBias = 6.0f;
 
-
-// STEP 2 : Initializing triangle manager
-
-//	MazeGame::triManager = DTManager{drawer, 25000, 25000};
-
-
-// STEP 3: Initializing GameManager
+// STEP 2: Initializing GameManager
 
 
 
-	//TODO: organize GameObjects creation in some manager class (aka MECH_MANAGER), move there all game mechanics realization
 
 	MazeGame::gameCore = new MazeGame::GameManager{fieldSize, fieldSize};
 	
@@ -239,13 +232,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 	MazeUI::Window* fpsWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 	fpsWindow->addNewItem(new MazeUI::StatText<float>(MAZE_FPS, "fps"));
 	MazeUI::manager.addNewElement(fpsWindow);
-// STEP 4: finishing initialization, updating static vertices
 
 	drawer->updateOverlay();
 
 // GAME LOOP STARTS HERE
 
-	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit()){
+	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit() ){
 
 	
 		auto tStart = std::chrono::high_resolution_clock::now();

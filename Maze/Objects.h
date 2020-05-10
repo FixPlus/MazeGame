@@ -311,7 +311,7 @@ public:
 	int id = 0;
 
 	explicit Powerup(Cell* par = nullptr, float size = 5.0f, glm::vec3 color = {0.0f, 0.5f, 1.0f}): 
-	Model(), GameObject(par), AnyDynamicModel(M_WALL, size), ModeledObject(){ transparent_ = true; setInPosition();};
+	Model(), GameObject(par), AnyDynamicModel(M_COIN, size), ModeledObject(){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f));transparent_ = true; setInPosition();};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::POWERUP, id};
@@ -334,7 +334,7 @@ class CoinObject: public ModeledObject, public Peakable, public SingleInstanceMo
 public:
 	static int count;
 	explicit CoinObject(Cell* par = nullptr, float size = 5.0f): 
-	Model(), GameObject(par), SingleInstanceModel(M_WALL, size), ModeledObject(){ transparent_ = true; count++; setInPosition();};
+	Model(), GameObject(par), SingleInstanceModel(M_COIN, size), ModeledObject(){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); transparent_ = true; count++; setInPosition();};
 
 	void printObjectInfo() const override{
 		std::cout << "Coin" << std::endl;
@@ -359,7 +359,7 @@ class Seeker: public DynamicModeledObject, public AnyDynamicModel{
 public:
 
 	explicit Seeker(Cell* par, float size = 5.0f, float ispeed = 1.0f, glm::vec3 color = {1.0f, 1.0f, 1.0f}, GameObject* iaim = NULL): 
-	GameObject(par), Model(), AnyDynamicModel(M_TEST, size), DynamicModeledObject(ispeed), aim(iaim){
+	GameObject(par), Model(), AnyDynamicModel(M_SPIKE, size), DynamicModeledObject(ispeed), aim(iaim){
 		speed = ispeed;
 	};
 
@@ -429,7 +429,7 @@ class Bullet: public DynamicDirectedObject, public AnyDynamicModel{
 	int id;
 public:
 	explicit Bullet(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_WALL, size), id(iid){ transparent_ = true; setInPosition(); };
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_SPIKE, size), id(iid){ transparent_ = true; setInPosition(); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::BULLET, id};
@@ -494,7 +494,7 @@ class Cannon: public DynamicDirectedObject, public AnyDynamicModel {
 	static glm::vec3 constexpr stateColors[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 public:
 	explicit Cannon(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f},float ispeed = 5.0, int idir = 2, float fr = 2.0):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_TEST, size), fire_rate(fr) { setInPosition(); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); id = next_id++;};
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size), fire_rate(fr) { setInPosition(); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); id = next_id++;};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::NPC, id};
