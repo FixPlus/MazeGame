@@ -76,12 +76,12 @@ public:
 
 	virtual bool canMove(Cell const* from, Cell const* into) = 0;
 
-	void moveObj(int dir){
+	int moveObj(int dir){
 		if(moving)
-			return;
+			return false;
 		Cell* dest = gameCore->getNeiCell(getCell(), static_cast<enum Dirs>(dir));
 		if(dest == nullptr)
-			return;
+			return false;
 	
 
 		if(canMove(getCell(), dest)){
@@ -97,16 +97,19 @@ public:
 
 			progression = 0.0f;
 			moving = true;
+			return true;
 		}
+		return false;
+
 	};
-	void moveObj(int x, int y){
+	int moveObj(int x, int y){
 		if(moving)
-			return;
+			return false;
 
 		Cell* dest = gameCore->getCell(x, y);
 
 		if(dest == nullptr)
-			return;
+			return false;
 
 		if(canMove(getCell(), dest)){
 			destination = dest;
@@ -120,8 +123,9 @@ public:
 
 			progression = 0.0f;
 			moving = true;
+			return true;
 		}
-
+		return false;
 	};
 
 	void update(float dt) override{
@@ -283,9 +287,9 @@ public:
 		return (into && into->type == CellType::PATH && !GameCore::isThereObjectsInCell(into, [](GameObject const * obj) -> bool{ return !obj->isTransparent();})) ? true : false;
 	}
 
-	void moveInDirection(){
+	int moveInDirection(){
 		if(!onChangingDirection)
-		moveObj(dir * 2);
+		return moveObj(dir * 2);
 	};
 
 };
@@ -295,6 +299,7 @@ struct Peakable: public virtual GameObject{
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
 			case ObjectType::PLAYER: {
+				if(another->getParent() == getParent())
 				expired = true;
 				break;
 			}
@@ -451,6 +456,7 @@ public:
 	}
 
 
+
 	void interact(GameObject* another) override{
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
@@ -478,6 +484,43 @@ public:
 	}
 
 };
+
+
+class Spike: public DynamicDirectedObject, public SingleInstanceModel{
+public:
+	explicit Spike(Cell* par, int idir = 2,float ispeed = 5.0 , float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}):
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), SingleInstanceModel(M_SPIKE, size){
+		transparent_ = true;
+	}
+	bool canMove(Cell const* from, Cell const* into) override{
+		return (into && into->type == CellType::PATH );
+	}
+
+	ObjectInfo getInfo() const override{
+		return {ObjectType::NPC, -1};
+	};
+	void update(float dt) override{
+		DynamicDirectedObject::update(dt);
+		if(!isMoving() && !isChangingDirection()){
+			if(!moveInDirection())
+				changeDirection(dir + 2);
+		}
+	}
+
+	void interact(GameObject* another) override{
+		ObjectInfo info = another->getInfo();
+		switch(info.type){
+			case ObjectType::PLAYER: {
+				expired = true;
+				break;
+			}
+			default:{}
+		}
+	};
+
+
+};
+
 
 template <typename AnyDynamicModel>
 class Cannon: public DynamicDirectedObject, public AnyDynamicModel {

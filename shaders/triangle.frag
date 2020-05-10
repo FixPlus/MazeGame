@@ -28,7 +28,7 @@ void main()
 		outFragColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	else{
 	  float len_v_trace = length(inViewTrace);
-	  vec4 color = texture(samplerColor1, vec2(inUV.x, inUV.y), inLodBias);
+	  vec4 color = texture(samplerColor1, vec2(inUV.x, inUV.y), 1.0f);
 	  
 	  vec3 norm_trace = normalize(inTrace);
 	  vec3 norm_view_trace = normalize(inViewTrace);

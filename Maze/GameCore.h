@@ -84,7 +84,7 @@ public:
 
 		for(auto& object: objects)
 			for(auto& nei: object->getParent()->objects)
-				if(nei != object && object->getParent() == nei->getParent()) 
+				if(nei != object) 
 					object->interact(nei);
 
 		for(auto& object: objects)

@@ -213,6 +213,13 @@ public:
 
 	}
 
+	void clear(){
+		for(auto& wall: walls)
+			drawer->returnInstance(wall);
+		for(auto& path: paths)
+			drawer->returnInstance(path);		
+	}
+
 	Field const& operator=(Field const& another) = delete;
 
 	Field& operator=(Field&& another){

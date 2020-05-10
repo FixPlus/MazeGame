@@ -113,20 +113,24 @@ public:
 
 class InputBox: public WindowItem{
 	std::string label;
-	static int DEFAULT_STAT;
-	int& refered_stat;
+	std::function<void(int)> onChangeState;
+	int stat = 0;
 	int lower_bound, upper_bound;
 public:
-	InputBox(std::string lbl = "input", int& ref = DEFAULT_STAT, int lb = 5, int ub = 100): label(lbl), refered_stat(ref), lower_bound(lb), upper_bound(ub){};
+	InputBox(std::string lbl = "input", std::function<void(int)> ocs = [](int){}, int istat = 0, int lb = 5, int ub = 100): stat(istat), label(lbl), onChangeState(ocs), lower_bound(lb), upper_bound(ub){};
 
 	bool update(int width, int height) override{
-		ImGui::InputInt(label.c_str(), &refered_stat);
+		int temp = stat;
+		ImGui::InputInt(label.c_str(), &stat);
 
-		if(refered_stat < lower_bound)
-			refered_stat = lower_bound;
+		if(stat < lower_bound)
+			stat = lower_bound;
 
-		if(refered_stat > upper_bound)
-			refered_stat = upper_bound;
+		if(stat > upper_bound)
+			stat = upper_bound;
+
+		if(temp != stat)
+			onChangeState(stat);
 
 		return false;
 	}
