@@ -160,6 +160,7 @@ const glm::vec3 dirNormal(int dir){
 class Field: public virtual Model, public MazeGame::CellField{
 
 	std::vector<InstanceView const*> walls;
+	std::vector<InstanceView const*> paths;
 
 
 	float cellSize = 10.0;//, wallHeight = 8.0;
@@ -191,16 +192,24 @@ public:
 	void recreate(){
 		for(auto& wall: walls)
 			drawer->returnInstance(wall);
+		for(auto& path: paths)
+			drawer->returnInstance(path);
 
 		for(int i = 0; i < getWidth(); i++)
 			for(int j = 0; j < getHeight(); j++)
 				if(getCell(i, j)->type == MazeGame::CellType::WALL){
-					walls.emplace_back(drawer->addInstance(MazeGame::M_MODEL));
+					walls.emplace_back(drawer->addInstance(MazeGame::M_WALL));
 					InstanceData* instance = (*(--walls.end()))->instance();
-					instance->pos = glm::vec3{i * cellSize, getZeroLevel(), j * cellSize};
+					instance->pos = glm::vec3{i * cellSize, getZeroLevel() - cellSize / 2.0f, j * cellSize};
 					instance->scale = cellSize;
 				}
-				std::cout << "Field made with " << walls.size() << " walls" << std::endl;
+				else{
+					paths.emplace_back(drawer->addInstance(MazeGame::M_PATH));
+					InstanceData* instance = (*(--paths.end()))->instance();
+					instance->pos = glm::vec3{i * cellSize, getZeroLevel() + cellSize / 2.0f, j * cellSize};
+					instance->scale = cellSize;
+				}
+				std::cout << "Field made with " << walls.size() << " walls and " << paths.size() << " paths" << std::endl;
 
 	}
 
@@ -212,9 +221,14 @@ public:
 			for(auto& wall: walls){
 				drawer->returnInstance(wall);
 			}
+			for(auto& path: paths)
+				drawer->returnInstance(path);
+			paths.clear();
 			walls.clear();
 			walls = another.walls;
+			paths = another.paths;
 			another.walls.clear();
+			another.paths.clear();
 			cellSize = another.cellSize;
 		}
 		return *this;
@@ -230,14 +244,14 @@ public:
 	}
 
 	Field(int w = 0, int h = 0) : Model(), CellField(w, h){
-		generateRandomMaze();
 
-		recreate();
 	};
 
 	~Field(){
 		for(auto& wall: walls)
 			drawer->returnInstance(wall);
+		for(auto& path: paths)
+			drawer->returnInstance(path);
 	}
 };
 

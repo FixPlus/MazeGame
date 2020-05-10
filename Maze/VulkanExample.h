@@ -223,15 +223,15 @@ public:
 		// Example uses one ubo 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
-			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2),
+			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, models.size()),
+			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, models.size()),
 		};
 
 		VkDescriptorPoolCreateInfo descriptorPoolInfo =
 			vks::initializers::descriptorPoolCreateInfo(
 				poolSizes.size(),
 				poolSizes.data(),
-				2);
+				models.size());
 
 		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
 	}
@@ -276,6 +276,7 @@ public:
 
 
 		for(auto& model: models){
+			std::cout << "Hubba-bubba" << std::endl;
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &descripotrSetAllocInfo, &model.descriptorSet));
 			writeDescriptorSets = {			
 				vks::initializers::writeDescriptorSet(model.descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,	0, &uniformBuffers.scene.descriptor),	// Binding 0 : Vertex shader uniform buffer			
