@@ -126,10 +126,21 @@ public:
 		float yangle = asin(glm::dot(axis, glm::vec3{0.0f, 1.0f, 0.0f}));
 		instance_->instance()->rot = glm::vec3{xangle, yangle, 0.0f};
 */
+		float dot = glm::dot(axis, glm::vec3({1.0f, 0.0f ,0.0f}));
+		if(dot == 1.0f)
+			return;
+		else
+			if(dot == -1.0f){
+				if(instance_)
+					instance_->instance()->rot = glm::vec3{3.141592f, 0.0f, 0.0f};
+				return;
+			}
+					
 		glm::fquat instRot{glm::vec3{0.0f, 0.0f, 0.0f}};
 		instRot = glm::rotate(instRot, acos(glm::dot(axis, glm::vec3{1.0f, 0.0f, 0.0f})), glm::cross(axis, glm::vec3{1.0f, 0.0f, 0.0f}));
 		instRot = glm::normalize(instRot);
-		instance_->instance()->rot = glm::eulerAngles(instRot);
+		if(instance_)
+			instance_->instance()->rot = glm::eulerAngles(instRot);
 
 	};
 

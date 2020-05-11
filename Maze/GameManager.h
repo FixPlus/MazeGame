@@ -25,7 +25,7 @@ public:
 	void holdCamera(){
 		if(drawer){
 			drawer->moveCamera(-objectToFixAt->getPosition() - disposal);
-			drawer->setCameraAxis(disposal);
+			drawer->setCameraAxis(disposal + glm::vec3{0.0f, disposal.y * 0.5f, 0.0f});
 		}
 
 	};
@@ -129,19 +129,24 @@ public:
 	float fire_rate = 2.0f;
 
 	std::function<void(void)> onDeath = [](){};
-	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
+	explicit PlayerObject(Cell* par, float size = 1.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
+	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
 	};
 
 	void update(float dt) override{
+		HealthObject::update(dt);
 		if(fire_timer < 1.0f/fire_rate)
 			fire_timer += dt;
 		else{
 			if(!isChangingDirection() && onFiring && ammo > 0){
-				gameCore->addNewGameObject(new Bullet<SingleInstanceModel>(getCell(), 1.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0));
+				Bullet<SingleInstanceModel>* bullet = dynamic_cast<Bullet<SingleInstanceModel>*>(gameCore->addNewGameObject(new Bullet<SingleInstanceModel>(getCell(), 10.0f, {1.0f, 1.0f, 1.0f}, 10.0f, getDir(), 0)));
+				int dir = bullet->getDir();
+				bullet->update(0.0f);
+				bullet->rotate({1.0f * ((dir + 1) % 2) * ((dir < 2) ? -1.0f : 1.0f), 0.0f, 1.0f * ((dir) % 2) * ((dir < 2) ? 1.0f : -1.0f) }, 90.0f);
+			//	bullet->rotate({1.0f, 0.0f, 0.0f }, 90.0f);
 				ammo--;
 				fire_timer = 0.0f;
 			}
@@ -161,13 +166,22 @@ public:
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
 			case ObjectType::COIN: {
-				//speed += 0.2f;
+				modifyHP(5.0f);
 				break;
 			}
 			case ObjectType::BULLET: {
 				if(another->getParent() == getParent() && info.data != 0)
 					modifyHP(-5.0f);
 				break;
+			}
+			case ObjectType::NPC: {
+				if(info.data == -1)
+					modifyHP(-5.0f);
+				break;
+			}
+			case ObjectType::POWERUP: {
+				if(another->getParent() == getParent() && info.data == 0)
+					ammo++;
 			}
 		}
 	};
@@ -301,18 +315,17 @@ void GameManager::setupLevelScene(){
 */
 
 
-	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
-										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
-
 
 	//This task will spawn 5 Coin objects on free path cells every second during 60 seconds lifetime 	
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new AmmoObject(par);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
+
 	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new CoinObject(par);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
 
 	int spike_dir = 2;
 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 1, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
 										       [this, spike_dir](Cell* c){ 
 
 										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
@@ -330,7 +343,7 @@ void GameManager::setupLevelScene(){
 
 	spike_dir = 1;
 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 1, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
 										       [this, spike_dir](Cell* c){ 
 
 										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
@@ -349,8 +362,9 @@ void GameManager::setupLevelScene(){
 
 //	spawner.clear();
 	MazeUI::manager.clear();
-	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.85f, 0.2f, 0.15f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	statWindow->addNewItem(new MazeUI::StatText<float>(player->hp(), "HP"));
+	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.8f, 0.2f, 0.2f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	statWindow->addNewItem(new MazeUI::StatText<float>(player->hp(), "FLEX"));
+	statWindow->addNewItem(new MazeUI::StatText<int>(player->ammo, "AMMO"));
 
 
 	MazeUI::Window* debugWindow = new MazeUI::Window("Debug", 0.0f, 0.2f, 0.2f, 0.3f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -373,7 +387,7 @@ void GameManager::setupLevelScene(){
 	MazeUI::Window* fpsWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 	fpsWindow->addNewItem(new MazeUI::StatText<float>(MAZE_FPS, "fps"));
 	MazeUI::Window* hintWindow = new MazeUI::Window("Hint", 0.0f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	hintWindow->addNewItem(new MazeUI::Text("Press 'R' to fire"));
+	hintWindow->addNewItem(new MazeUI::Text("Press 'R' to flex"));
 	//hintWindow->visible = false;
 
 	MazeUI::Window* pauseWindow = new MazeUI::Window("Pause window", 0.4f, 0.45f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse| ImGuiWindowFlags_NoTitleBar);

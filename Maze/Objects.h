@@ -39,10 +39,15 @@ Cell* GameObject::getCell(){
 class HealthObject: public virtual GameObject {
 	float max_hp_;
 	float hp_;
+	float cool_down = 1.0f;
+	float timer = 0.0f;
+	bool onCoolDown = false;
 public:
-	explicit HealthObject(float max_hp = 100.0f): max_hp_(max_hp), hp_(max_hp){};
+	explicit HealthObject(float max_hp = 100.0f): max_hp_(max_hp), hp_(max_hp), GameObject(nullptr){};
 
 	void modifyHP(float count){
+		if(onCoolDown)
+			return;
 		hp_ += count;
 		if(hp_ > max_hp_)
 			hp_ = max_hp_;
@@ -51,8 +56,18 @@ public:
 			hp_ = 0.0f;
 			expired = true;
 		}
+
+		onCoolDown = true;
+		timer = 0.0f;
 	}
 
+	void update(float dt) override{
+		timer += dt;
+		if(timer > cool_down){
+			onCoolDown = false;
+			timer = 0.0f;
+		}
+	}
 	float const& hp() const{
 		return hp_;
 	}
@@ -208,6 +223,7 @@ public:
 class DirectedObject: public virtual ModeledObject {
 	float progress = 0.0f;
 	bool clockwise = true;
+	bool set = false;
 	int nDir = 2;
 	int delta = 0;
 protected:
@@ -215,11 +231,17 @@ protected:
 	int dir = 2;
 public:
 	float rotSpeed = 500.0f;
+	void changeDirectionFast(int newDir){
+		dir = newDir % 4;
+		faceOnAxis({1.0f * ((dir + 1) % 2) * ((dir < 2) ? -1.0f : 1.0f), 0.0f, 1.0f * ((dir) % 2) * ((dir < 2) ? 1.0f : -1.0f) });
+//		faceOnAxis({0.0f, 0.0f, -1.0f});
+	}
 	explicit DirectedObject(int idir = 2): dir(idir) { };
 
 	void changeDirection(int newDir){
 		if(onChangingDirection)
 			return;
+
 
 		int div = newDir % 4 - dir;
 		if(div == 0)
@@ -231,7 +253,12 @@ public:
 		onChangingDirection = true;
 	};
 
+
 	void update(float dt) override{
+		if(!set){
+			changeDirectionFast(dir);
+			set = true;
+		}
 		ModeledObject::update(dt);
 		if(onChangingDirection){
 			progress += dt * rotSpeed;
@@ -338,7 +365,7 @@ class CoinObject: public ModeledObject, public Peakable, public SingleInstanceMo
 	int nominal = 10;
 public:
 	static int count;
-	explicit CoinObject(Cell* par = nullptr, float size = 5.0f): 
+	explicit CoinObject(Cell* par = nullptr, float size = 8.0f): 
 	Model(), GameObject(par), SingleInstanceModel(M_COIN, size), ModeledObject(){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); transparent_ = true; count++; setInPosition();};
 
 	void printObjectInfo() const override{
@@ -355,6 +382,21 @@ public:
 	}
 };
 
+class AmmoObject: public ModeledObject, public Peakable, public SingleInstanceModel {
+public:
+	explicit AmmoObject(Cell* par = nullptr, float size = 8.0f): 
+	Model(), GameObject(par), SingleInstanceModel(M_AMMO, size), ModeledObject(){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); transparent_ = true; count++; setInPosition();};
+
+	void printObjectInfo() const override{
+		std::cout << "Ammo" << std::endl;
+	}
+
+
+	ObjectInfo getInfo() const override{
+		return {ObjectType::POWERUP, 0};
+	};
+
+};
 
 template <typename AnyDynamicModel>
 class Seeker: public DynamicModeledObject, public AnyDynamicModel{
@@ -434,7 +476,7 @@ class Bullet: public DynamicDirectedObject, public AnyDynamicModel{
 	int id;
 public:
 	explicit Bullet(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2, int iid = 0):
-	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_SPIKE, size), id(iid){ transparent_ = true; setInPosition(); };
+	GameObject(par), Model(), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_FLEX, size), id(iid){ transparent_ = true; setInPosition(); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::BULLET, id};
@@ -506,21 +548,18 @@ public:
 				changeDirection(dir + 2);
 		}
 	}
+	
 
 	void interact(GameObject* another) override{
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
-			case ObjectType::PLAYER: {
+			case ObjectType::BULLET: {
+				
 				expired = true;
+				
 				break;
 			}
-			default:{}
-			case ObjectType::BULLET: {
-				if(info.data == 0){
-					expired = true;
-				}
-
-			}
+			default:{ break;}
 		}
 	};
 
