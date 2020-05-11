@@ -24,12 +24,12 @@ as study project in MIPT
 Now it's working both on Linux and Windows platforms
 
 
-#Version
+# Version
 
 	It is first alpha release version (v0.0.1)
 
 
-#TODO List
+# TODO List
 
 	TODO: Animation implementation
 
