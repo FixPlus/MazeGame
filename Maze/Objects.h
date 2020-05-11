@@ -230,6 +230,7 @@ public:
 		clockwise = div > 0 && div < 2 || div == -3;
 		delta = (abs(div) == 2) ? 2 : 1;
 		nDir = newDir % 4;
+		dir = nDir;
 		onChangingDirection = true;
 	};
 

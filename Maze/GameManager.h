@@ -219,8 +219,8 @@ public:
 	int volatile setup = 0;
 	bool paused = false;
 	struct {
-		int width = 150;
-		int height = 150;
+		int width = 40;
+		int height = 40;
 	} options;
 
 	GameManager(int f_w = 50, int f_h = 50): GameCore(f_w, f_h){

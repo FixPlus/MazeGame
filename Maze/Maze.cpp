@@ -101,6 +101,8 @@ void renderLoop(){
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		usleep((unsigned int)timeToSleepMicroSecs);
+#elif defined(_WIN32)
+		Sleep((unsigned int)timeToSleepMicroSecs / 1000);
 #endif
 
 		tEnd = std::chrono::high_resolution_clock::now();
@@ -142,7 +144,10 @@ void gameLoop(){
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 		usleep((unsigned int)timeToSleepMicroSecs);
+#elif defined(_WIN32)
+		Sleep((unsigned int)timeToSleepMicroSecs / 1000);
 #endif
+
 
 		tEnd = std::chrono::high_resolution_clock::now();
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
@@ -274,10 +279,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 // GAME LOOP STARTS HERE
 
-	std::thread rendering{renderLoop};
+//	std::thread rendering{renderLoop};
 	std::thread gameEvents{gameLoop};
-
-	rendering.join();
+	renderLoop();
+//	rendering.join();
 	gameEvents.join();
 
 // FREEING THE ALLOCATED DATA
