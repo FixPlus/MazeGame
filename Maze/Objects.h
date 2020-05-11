@@ -42,6 +42,8 @@ class HealthObject: public virtual GameObject {
 public:
 	explicit HealthObject(float max_hp = 100.0f): max_hp_(max_hp), hp_(max_hp){};
 
+	virtual void onDeath() = 0;
+
 	void modifyHP(float count){
 		hp_ += count;
 		if(hp_ > max_hp_)
@@ -49,7 +51,7 @@ public:
 
 		if(hp_ <= 0.0f + __FLT_EPSILON__){
 			hp_ = 0.0f;
-			expired = true;
+			onDeath();
 		}
 	}
 
@@ -310,13 +312,13 @@ struct Peakable: public virtual GameObject{
 
 // OBJECTS GROOPS
 
-template<typename AnyDynamicModel>
-class Powerup: public ModeledObject, public Peakable,  public AnyDynamicModel{
+
+class Powerup: public ModeledObject, public Peakable,  public SingleInstanceModel{
 public:
 	int id = 0;
 
-	explicit Powerup(Cell* par = nullptr, float size = 5.0f, glm::vec3 color = {0.0f, 0.5f, 1.0f}): 
-	Model(), GameObject(par), AnyDynamicModel(M_COIN, size), ModeledObject(){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f));transparent_ = true; setInPosition();};
+	explicit Powerup(Cell* par = nullptr,int iid = 0, MazeGame::ModelName model = M_COIN,  float size = 5.0f, glm::vec3 color = {0.0f, 0.5f, 1.0f}): 
+	Model(), GameObject(par), SingleInstanceModel(model, size), ModeledObject(), id(iid){ addNewRotationBack(std::make_pair(glm::vec3{0.0f, 1.0f, 0.0f}, 90.0f)); addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f));transparent_ = true; setInPosition();};
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::POWERUP, id};

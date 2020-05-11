@@ -48,6 +48,7 @@ public:
 	};
 
 
+
 	virtual ~GameObject(){
 		count--;
 		parent->removeObject(this);
@@ -84,7 +85,7 @@ public:
 
 		for(auto& object: objects)
 			for(auto& nei: object->getParent()->objects)
-				if(nei != object) 
+				if(nei != object && object->getParent() == nei->getParent()) 
 					object->interact(nei);
 
 		for(auto& object: objects)

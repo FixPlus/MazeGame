@@ -84,6 +84,16 @@ public:
 
 };
 
+class ExternalText: public Text{
+	std::function<std::string(void)> ext_text;
+public:
+	ExternalText(std::function<std::string(void)> ex_t): ext_text(ex_t){};
+	bool update(int width, int height) override{
+		text = ext_text();
+		return Text::update(width, height);
+	}
+};
+
 template<typename Stat>
 class StatText: public Text {
 /*

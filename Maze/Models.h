@@ -195,6 +195,9 @@ public:
 		for(auto& path: paths)
 			drawer->returnInstance(path);
 
+		walls.clear();
+		paths.clear();
+
 		for(int i = 0; i < getWidth(); i++)
 			for(int j = 0; j < getHeight(); j++)
 				if(getCell(i, j)->type == MazeGame::CellType::WALL){

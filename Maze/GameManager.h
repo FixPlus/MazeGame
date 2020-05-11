@@ -128,14 +128,19 @@ public:
 	float fire_timer = 0.0f;
 	float fire_rate = 2.0f;
 
-	std::function<void(void)> onDeath = [](){};
+	int coins_colected = 0;
+
+	std::function<void(void)> onDeath_ = [](){};
 	explicit PlayerObject(Cell* par, float size = 5.0f, glm::vec3 color = {1.0f, 0.0f, 0.0f}, float ispeed = 1.0f, int idir = 2):
-	GameObject(par), Model(), HealthObject(100.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
+	GameObject(par), Model(), HealthObject(5.0f), DynamicDirectedObject(idir, ispeed), AnyDynamicModel(M_CANNON, size){ rotSpeed = 400.0f; addNewRotationBack(std::make_pair(glm::vec3{1.0f, 0.0f, 0.0f}, 90.0f)); };
 
 	ObjectInfo getInfo() const override{
 		return {ObjectType::PLAYER, 0};
 	};
 
+	void onDeath() override{
+		onDeath_();
+	};
 	void update(float dt) override{
 		if(fire_timer < 1.0f/fire_rate)
 			fire_timer += dt;
@@ -160,21 +165,32 @@ public:
 	void interact(GameObject* another) override{
 		ObjectInfo info = another->getInfo();
 		switch(info.type){
-			case ObjectType::COIN: {
-				//speed += 0.2f;
+			case ObjectType::POWERUP: {
+				switch(info.data){
+					case 0: modifyHP(1.0f); break; //heal
+					case 1: ammo += 2; break; //ammo
+					default: break;
+				}
+				
+				
 				break;
 			}
 			case ObjectType::BULLET: {
-				if(another->getParent() == getParent() && info.data != 0)
-					modifyHP(-5.0f);
+				if(info.data != 0)
+					modifyHP(-1.0f);
+				break;
+			}
+			case ObjectType::COIN:{
+					coins_colected++;
+				break;
+			}
+			case ObjectType::NPC: {
+				if(info.data == -1)
+					modifyHP(-1.0f);
 				break;
 			}
 		}
 	};
-
-	~PlayerObject(){
-		onDeath();
-	}
 
 };
 
@@ -184,12 +200,27 @@ class GameManager: public GameCore{
 	CameraKeeper camKeep;
 	PlayerObject<SingleInstanceModel>* player; // this is NOT owning pointer
 	ObjectSpawner spawner;
+	struct {
+		std::function<bool(void)> scenarioCond = [](){ return false;};
+		std::function<void(void)> onCondition = [](){};
+		std::function<std::string(void)> whatCondition = [](){return "no condition";};
+
+		void checkCondition(){
+			if(scenarioCond())
+				onCondition();
+		}
+		void reset(){
+			scenarioCond = [](){ return false;};
+			onCondition = [](){};
+			whatCondition = [](){return "no condition";};
+		}
+	} scenarioManager;
 public:
-	int setup = 0;
+	int volatile setup = 0;
 	bool paused = false;
 	struct {
-		int width = 75;
-		int height = 75;
+		int width = 150;
+		int height = 150;
 	} options;
 
 	GameManager(int f_w = 50, int f_h = 50): GameCore(f_w, f_h){
@@ -224,6 +255,7 @@ public:
 			spawner.update(dt);
 			GameCore::update(dt);
 			camKeep.holdCamera();
+			scenarioManager.checkCondition();
 		}
 	}
 	GameObject* getPlayer() {
@@ -238,6 +270,7 @@ void GameManager::setupMenuScene(){
 	freeGameObjects();
 	spawner.clear();
 	Field::clear();
+	scenarioManager.reset();
 	//recreate();
 	camKeep = CameraKeeper{dynamic_cast<Model*>(this), {-70.0f,-60.0f,-70.0f}};
 	MazeUI::manager.clear();
@@ -275,44 +308,61 @@ void GameManager::setupLevelScene(){
 
 	player = dynamic_cast<PlayerObject<SingleInstanceModel>*>(addNewGameObject(new PlayerObject<SingleInstanceModel>{init, 5.0f,  glm::vec3{1.0f, 0.0f, 0.0f}, 5.0f}));
 
-	player->onDeath = [this](){
-		player = nullptr;
-		setup = 1;
+	player->onDeath_ = [this](){
+		paused = true; inputHandler.reset(); 
+		MazeUI::Window* loseWindow = new MazeUI::Window("You lose!", 0.4f, 0.4f, 0.2f, 0.2f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+		loseWindow->addNewItem(new MazeUI::Button("Restart", [this](){
+			setup = 2;
+		}, 0.19f, 0.05f));
+		loseWindow->addNewItem(new MazeUI::Button("Menu", [this](){
+			setup = 1;
+		}, 0.19f, 0.05f));
+		MazeUI::manager.addNewElement(loseWindow);
 	};
 
 	camKeep = CameraKeeper{dynamic_cast<Model*>(player), {-70.0f,-60.0f,-70.0f}};
 	camKeep.scaleDisposal(0.5);
 
+	scenarioManager.scenarioCond = [this](){ return player->coins_colected == 20;};
+	scenarioManager.onCondition = [this](){ 
+		paused = true; inputHandler.reset(); 
+		MazeUI::Window* winWindow = new MazeUI::Window("You win!", 0.4f, 0.4f, 0.2f, 0.2f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+		winWindow->addNewItem(new MazeUI::Button("Restart", [this](){
+			setup = 2;
+		}, 0.19f, 0.05f));
+		winWindow->addNewItem(new MazeUI::Button("Menu", [this](){
+			setup = 1;
+		}, 0.19f, 0.05f));
+		MazeUI::manager.addNewElement(winWindow);
+	};
+	scenarioManager.whatCondition = [this](){ 
+		std::stringstream ss;
+		ss << "Task: collect coins: " << player->coins_colected << "/20";
+		return ss.str();
+	};
 
 
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{20.0f, 2, [](Cell* par)->GameObject*{ return new Powerup(par, 0, M_HEAL);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 180.0f});
 
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{10.0f, 2, [](Cell* par)->GameObject*{ return new Powerup(par, 1, M_BOX);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 180.0f});
 
-/*
-	for(int i = 0; i < 250; i++){
-		auto freePathRule = [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);};
-		init = getRandomCell(freePathRule);
-
-		addNewGameObject(new CoinObject{init, 5.0f});
-
-		init = getRandomCell(freePathRule);
-		
-		addNewGameObject(new Cannon<SimpleArrow>{init, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0});
-	}
-*/
 
 
 	//This task will spawn 5 Cannon objects on free path cells every second during 20 seconds lifetime 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
+/*	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new Cannon<SingleInstanceModel>(par, 5.0f, {1.0f, 0.0f, 0.0f}, 5.0f, 2, 2.0);},
 										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 20.0f});
+*/
+ 	
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 20, [](Cell* par)->GameObject*{ return new CoinObject(par);},
+										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 1.5f});
 
 
-	//This task will spawn 5 Coin objects on free path cells every second during 60 seconds lifetime 	
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{1.0f, 5, [](Cell* par)->GameObject*{ return new CoinObject(par);},
-										       [this](Cell* c){ return c->type == CellType::PATH && !isThereObjectsInCell(c);}, 60.0f});
 
 	int spike_dir = 2;
 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 2, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
 										       [this, spike_dir](Cell* c){ 
 
 										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
@@ -330,7 +380,7 @@ void GameManager::setupLevelScene(){
 
 	spike_dir = 1;
 
-	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 10, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
+	spawner.addNewSpawnTask(ObjectSpawner::SpawnInfo{0.5f, 2, [spike_dir](Cell* par)->GameObject*{ return new Spike(par, spike_dir);},
 										       [this, spike_dir](Cell* c){ 
 
 										       	std::function<int(Cell*, int)> lenChecker = [this, &lenChecker](Cell* c, int dir)->int{ 
@@ -351,6 +401,11 @@ void GameManager::setupLevelScene(){
 	MazeUI::manager.clear();
 	MazeUI::Window* statWindow = new MazeUI::Window("Stats", 0.0f, 0.85f, 0.2f, 0.15f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	statWindow->addNewItem(new MazeUI::StatText<float>(player->hp(), "HP"));
+	statWindow->addNewItem(new MazeUI::StatText<int>(player->ammo, "ammo"));
+
+	MazeUI::Window* scenarioWindow = new MazeUI::Window("Scenario", 0.7f, 0.8f, 0.3f, 0.2f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	scenarioWindow->addNewItem(new MazeUI::ExternalText(scenarioManager.whatCondition));
+
 
 
 	MazeUI::Window* debugWindow = new MazeUI::Window("Debug", 0.0f, 0.2f, 0.2f, 0.3f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -366,9 +421,6 @@ void GameManager::setupLevelScene(){
 	
 	debugWindow->visible = false;
 
-	statWindow->addNewItem(new MazeUI::Button("Menu", [this](){
-		setup = 1;
-	}, 0.19f, 0.05f));
 
 	MazeUI::Window* fpsWindow = new MazeUI::Window("", 0.9f, 0.0f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 	fpsWindow->addNewItem(new MazeUI::StatText<float>(MAZE_FPS, "fps"));
@@ -378,9 +430,13 @@ void GameManager::setupLevelScene(){
 
 	MazeUI::Window* pauseWindow = new MazeUI::Window("Pause window", 0.4f, 0.45f, 0.0f, 0.0f, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse| ImGuiWindowFlags_NoTitleBar);
 	pauseWindow->addNewItem(new MazeUI::Text("Game Paused"));
+	pauseWindow->addNewItem(new MazeUI::Button("Go back to Menu", [this](){
+		setup = 1;
+	}, 0.19f, 0.05f));
 	pauseWindow->visible = false;
 
 	MazeUI::manager.addNewElement(statWindow);
+	MazeUI::manager.addNewElement(scenarioWindow);
 	MazeUI::manager.addNewElement(fpsWindow);
 	MazeUI::manager.addNewElement(debugWindow);
 	MazeUI::manager.addNewElement(hintWindow);

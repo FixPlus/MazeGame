@@ -51,6 +51,8 @@ public:
 	// Per-instance data block
 	bool shouldRecreateInstances = false;
 
+	int onSending = 0;
+	bool onRendering = false;
 	struct Model{
 		
 		VkPipeline pipeline;
@@ -61,7 +63,6 @@ public:
 		std::vector<InstanceData> instances;
 		std::list<InstanceView> instanceViews;
 		vks::Buffer instanceBuf;
-
 		virtual ~Model(){};
 	};
 
@@ -549,6 +550,11 @@ public:
 	void draw()
 	{
 
+		if(onSending > 0)
+			return;
+		else
+			onRendering = true;
+
 		if(shouldRecreateInstances){
 			updateInstanceBuffers();
 			buildCommandBuffers();
@@ -568,15 +574,9 @@ public:
 		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
 
 		VulkanExampleBase::submitFrame();
+		onRendering = false;
 	}
 
-	void moveModels(){
-		for(auto& model: models){
-			for(auto& instance: model.instances)
-				instance.pos += glm::vec3{1.0f, 0.0f, 0.0f};
-		}
-		updateInstanceBuffers();
-	}
 
 	template<typename PairIt>
 	void prepare(PairIt begin, PairIt end)
@@ -603,10 +603,11 @@ public:
 		prepared = true;
 	}
 
-
 	InstanceView const* addInstance(int model_id){
+		int i = 0; 
+		while(onRendering) i++;
 
-
+		onSending++;
 		Model& model = models[model_id];
 		model.instances.emplace_back();
 		model.instanceViews.emplace_back(&(*(model.instances.end() - 1)));
@@ -617,6 +618,8 @@ public:
 		
 		for(; view_it != view_end; view_it++, inst_it++)
 			(*view_it).reset(&(*inst_it));
+
+
 
 		model.instanceBuf.destroy();
 
@@ -632,10 +635,10 @@ public:
 		VK_CHECK_RESULT(model.instanceBuf.map());
 
 		shouldRecreateInstances = true;
-
-
+		onSending--;
 		return &(*(--model.instanceViews.end()));
 	}
+
 
 	void returnInstance(InstanceView const* instance){
 		for(auto& model: models){
