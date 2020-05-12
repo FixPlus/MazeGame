@@ -26,7 +26,7 @@ void VulkanExample::mouseMoved(double x, double y, bool &handled){
 		}
 	dir = dir * rotateMat;
 
-	cameraPos += glm::vec3(dir);
+	//cameraPos += glm::vec3(dir);
 }
 
 void VulkanExample::moveCameraForward(float distance){

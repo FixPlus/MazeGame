@@ -13,6 +13,7 @@ class CameraKeeper final {
 	
 	glm::vec3 disposal;
 	Model* objectToFixAt;
+	std::queue<std::pair<glm::vec3,float>> rotQueue;
 
 public:
 	explicit CameraKeeper(Model* objTofixAt = NULL, glm::vec3 idisposal = {-15.0f, -15.0f, -15.0f}): objectToFixAt(objTofixAt), disposal(idisposal){
@@ -23,6 +24,14 @@ public:
 	};
 
 	void holdCamera(){
+		while(!rotQueue.empty()){
+			glm::vec3 axis = {0.0f, 1.0f, 0.0f};
+			float angle = 0.0f;
+			std::tie(axis, angle) = rotQueue.front();
+			rotQueue.pop();
+			glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians(angle), axis);
+			disposal = glm::vec3(rotateMat * glm::vec4(disposal, 0.0f));
+		}
 		if(drawer){
 			drawer->moveCamera(-objectToFixAt->getPosition() - disposal);
 			drawer->setCameraAxis(disposal);
@@ -45,9 +54,7 @@ public:
 	}
 
 	void rotateDisposal(glm::vec3 axis, float angle){
-		glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f) , glm::radians(angle), axis);
-		disposal = glm::vec3(rotateMat * glm::vec4(disposal, 0.0f));
-		holdCamera();
+		rotQueue.push(std::make_pair(axis, angle));
 	}
 
 };
@@ -219,8 +226,8 @@ public:
 	int volatile setup = 0;
 	bool paused = false;
 	struct {
-		int width = 40;
-		int height = 40;
+		int width = 50;
+		int height = 50;
 	} options;
 
 	GameManager(int f_w = 50, int f_h = 50): GameCore(f_w, f_h){
@@ -511,7 +518,12 @@ void GameManager::setupLevelScene(){
 	};
 	
 	inputHandler.onMouseWheelMove = [this](char d){
+		int code = static_cast<int>(d);
+#ifdef _WIN32
+		float dir = (code == 120 || code == -16) ? 1.0f : -1.0f;
+#else
 		float dir = d > 0 ? 1.0f : -1.0f;
+#endif
 		camKeep.rotateDisposal(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f * dir);
 	};	
 

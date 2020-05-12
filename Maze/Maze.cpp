@@ -35,7 +35,6 @@ Drawer* drawer;
 
 
 
-//DTManager MazeGame::triManager;   // Global triangle manager used by model to recieve and return triangles
 MazeGame::GameCore* MazeGame::gameCore;
 MazeUI::Manager MazeUI::manager;  // Global UI manager, handles all UI windows and input
 bool MazeGame::should_update_static_vertices = false; 
@@ -108,12 +107,9 @@ void renderLoop(){
 		tEnd = std::chrono::high_resolution_clock::now();
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		
-		//std::cout << deltaTime << std::endl;
 
 		deltaTime = tDiff / 1000.0f; // time of current cycle turn in seconds
-		fpsCounter.addFrame(deltaTime);
-		//std::cout << "end frame" << std::endl;
-	
+		fpsCounter.addFrame(deltaTime);	
 
 	}
 
@@ -153,11 +149,48 @@ void gameLoop(){
 		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		
 		deltaTime = tDiff / 1000.0f; // time of current cycle turn in seconds
-		//std::cout << deltaTime << std::endl;
 	}
 
 }
 
+
+void singleLoop(){
+	float deltaTime = 0.0f;
+	while(!drawer->shouldQuit() && !MazeGame::gameCore->shouldQuit() ){
+	
+		auto tStart = std::chrono::high_resolution_clock::now();
+
+		MazeGame::gameCore->update(deltaTime); //ALL IN-GAME EVENTS HAPPEN HERE
+
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+		drawer->handleEvents(); // LISTENING TO USER INPUT
+#endif
+
+
+		drawer->draw(); //RENDERING THE FRAME
+
+
+		auto tEnd = std::chrono::high_resolution_clock::now();
+		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+
+
+		int timeToSleepMicroSecs = 1000000u/60u - tDiff * 1000;
+		if(timeToSleepMicroSecs < 0)
+			timeToSleepMicroSecs = 0;
+
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+		usleep((unsigned int)timeToSleepMicroSecs);
+#endif
+
+
+		tEnd = std::chrono::high_resolution_clock::now();
+		tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+		
+		deltaTime = tDiff / 1000.0f; // time of current cycle turn in seconds
+		fpsCounter.addFrame(deltaTime);
+	}
+
+}
 
 
 
@@ -279,11 +312,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 // GAME LOOP STARTS HERE
 
-//	std::thread rendering{renderLoop};
+#ifdef MULTITHREADING
 	std::thread gameEvents{gameLoop};
 	renderLoop();
-//	rendering.join();
 	gameEvents.join();
+#else
+	singleLoop();
+#endif
 
 // FREEING THE ALLOCATED DATA
 
